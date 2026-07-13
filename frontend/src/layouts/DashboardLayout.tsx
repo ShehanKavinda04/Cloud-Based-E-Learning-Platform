@@ -9,7 +9,7 @@ import {
   Search,
   Bell,
   LogOut,
-  Sparkles,
+  Zap,
   LineChart,
   Menu,
   X,
@@ -58,10 +58,8 @@ export default function DashboardLayout() {
       >
         <div className="flex items-center justify-between p-6">
           <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary">
-              <Sparkles className="h-5 w-5 text-primary-foreground" />
-            </div>
-            <span className="text-lg font-bold">Nimbus LMS</span>
+            <img src="/logo.png" className="h-9 w-9 rounded-xl object-cover" alt="EduVantage Logo" />
+            <span className="text-lg font-bold">EduVantage</span>
           </div>
           <button
             className="text-slate-400 lg:hidden"

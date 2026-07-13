@@ -9,7 +9,7 @@ import {
   User as UserIcon,
   Loader2,
   CheckCircle2,
-  Sparkles,
+  Zap,
 } from "lucide-react"
 import { Button } from "@/components/ui/Primitives"
 import { useApp } from "@/store/AppContext"
@@ -39,7 +39,7 @@ export default function AuthPage() {
   const [mode, setMode] = useState<"login" | "signup">("login")
   const [role, setRole] = useState<UserRole>("student")
   const [name, setName] = useState("")
-  const [email, setEmail] = useState("student@nimbus.io")
+  const [email, setEmail] = useState("student@eduvantage.io")
   const [password, setPassword] = useState("password")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -74,10 +74,8 @@ export default function AuthPage() {
         <div className="absolute inset-0 bg-gradient-to-br from-dark/80 via-dark/60 to-primary/40" />
         <div className="relative flex h-full flex-col justify-between p-12 text-dark-foreground">
           <div className="flex items-center gap-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
-              <Sparkles className="h-5 w-5 text-primary-foreground" />
-            </div>
-            <span className="text-xl font-bold">Nimbus LMS</span>
+            <img src="/logo.png" className="h-10 w-10 rounded-xl object-cover" alt="EduVantage Logo" />
+            <span className="text-xl font-bold">EduVantage</span>
           </div>
 
           <div className="max-w-md">
@@ -108,10 +106,8 @@ export default function AuthPage() {
       <div className="flex w-full items-center justify-center p-6 lg:w-1/2">
         <div className="w-full max-w-md animate-fade-in">
           <div className="mb-8 flex items-center gap-2 lg:hidden">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
-              <Sparkles className="h-5 w-5 text-primary-foreground" />
-            </div>
-            <span className="text-xl font-bold">Nimbus LMS</span>
+            <img src="/logo.png" className="h-10 w-10 rounded-xl object-cover" alt="EduVantage Logo" />
+            <span className="text-xl font-bold">EduVantage</span>
           </div>
 
           <h2 className="text-2xl font-bold text-foreground">
@@ -190,7 +186,7 @@ export default function AuthPage() {
           </form>
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
-            {mode === "login" ? "New to Nimbus?" : "Already have an account?"}{" "}
+            {mode === "login" ? "New to EduVantage?" : "Already have an account?"}{" "}
             <button
               type="button"
               onClick={() => {
