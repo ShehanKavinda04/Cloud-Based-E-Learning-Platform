@@ -30,9 +30,9 @@ interface DraftQuestion {
 }
 
 const KPIS = [
-  { label: "Total Students", value: "35,240", delta: "+12.4%", icon: Users, color: "text-primary bg-indigo-50" },
-  { label: "Active Hours", value: "128,900", delta: "+8.1%", icon: Clock, color: "text-success bg-emerald-50" },
-  { label: "Avg. Course Rating", value: "4.8", delta: "+0.2", icon: Star, color: "text-warning bg-amber-50" },
+  { label: "Total Students", value: "35,240", delta: "+12.4%", icon: Users, color: "text-primary bg-primary/10" },
+  { label: "Active Hours", value: "128,900", delta: "+8.1%", icon: Clock, color: "text-success bg-success/10" },
+  { label: "Avg. Course Rating", value: "4.8", delta: "+0.2", icon: Star, color: "text-warning bg-warning/10" },
 ]
 
 // Simple weekly bar chart data (enrollments)
@@ -339,7 +339,7 @@ export default function ConsolePage() {
           onDrop={handleDrop}
           className={cn(
             "mt-4 flex flex-col items-center justify-center rounded-2xl border-2 border-dashed p-10 text-center transition-all duration-300",
-            dragging ? "border-primary bg-indigo-50" : "border-border bg-muted/30",
+            dragging ? "border-primary bg-primary/10" : "border-border bg-muted/30",
           )}
         >
           <UploadCloud className={cn("h-10 w-10", dragging ? "text-primary" : "text-muted-foreground")} />
@@ -361,7 +361,7 @@ export default function ConsolePage() {
           {files.map((f, i) => (
             <div key={i} className="flex items-center justify-between rounded-xl border border-border p-3">
               <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-50 text-primary">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
                   {f.type === "video" ? <FileVideo className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
                 </div>
                 <span className="text-sm font-medium text-foreground">{f.name}</span>

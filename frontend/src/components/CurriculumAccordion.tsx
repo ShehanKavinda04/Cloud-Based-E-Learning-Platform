@@ -65,7 +65,7 @@ export function CurriculumAccordion({
                       key={lesson.id}
                       className={cn(
                         "flex items-center gap-3 px-4 py-2.5 transition-colors",
-                        active ? "bg-indigo-50" : "hover:bg-muted/40",
+                        active ? "bg-primary/10" : "hover:bg-muted/40",
                       )}
                     >
                       <button
@@ -76,7 +76,7 @@ export function CurriculumAccordion({
                         {done ? (
                           <CheckCircle2 className="h-5 w-5 text-success" />
                         ) : (
-                          <Circle className="h-5 w-5 text-slate-300" />
+                          <Circle className="h-5 w-5 text-muted-foreground" />
                         )}
                       </button>
                       <button

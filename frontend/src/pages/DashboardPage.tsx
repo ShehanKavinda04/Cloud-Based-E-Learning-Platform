@@ -10,10 +10,10 @@ export default function DashboardPage() {
   const overall = overallProgressPct()
 
   const stats = [
-    { label: "Enrolled Courses", value: courses.length, icon: BookOpen, color: "text-primary bg-indigo-50" },
-    { label: "Hours Learned", value: "48h", icon: Clock, color: "text-success bg-emerald-50" },
-    { label: "Certificates", value: 2, icon: Trophy, color: "text-warning bg-amber-50" },
-    { label: "Day Streak", value: 12, icon: Flame, color: "text-danger bg-red-50" },
+    { label: "Enrolled Courses", value: courses.length, icon: BookOpen, color: "text-primary bg-primary/10" },
+    { label: "Hours Learned", value: "48h", icon: Clock, color: "text-success bg-success/10" },
+    { label: "Certificates", value: 2, icon: Trophy, color: "text-warning bg-warning/10" },
+    { label: "Day Streak", value: 12, icon: Flame, color: "text-danger bg-danger/10" },
   ]
 
   const firstName = user?.name?.split(" ")[0] ?? "there"

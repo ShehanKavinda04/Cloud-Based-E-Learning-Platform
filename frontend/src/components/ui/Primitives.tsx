@@ -57,10 +57,10 @@ export function Badge({
 }) {
   const colors = {
     muted: "bg-muted text-muted-foreground",
-    primary: "bg-indigo-50 text-primary",
-    success: "bg-emerald-50 text-success",
-    warning: "bg-amber-50 text-warning",
-    danger: "bg-red-50 text-danger",
+    primary: "bg-primary/10 text-primary",
+    success: "bg-success/10 text-success",
+    warning: "bg-warning/10 text-warning",
+    danger: "bg-danger/10 text-danger",
   }
   return (
     <span

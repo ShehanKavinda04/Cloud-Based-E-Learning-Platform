@@ -190,7 +190,7 @@ function ResourcesTab({
           className="flex items-center justify-between rounded-xl border border-border p-3 transition-all duration-300 hover:border-primary hover:bg-muted/40"
         >
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-50 text-primary">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
               {r.type === "zip" ? <FileArchive className="h-5 w-5" /> : <FileText className="h-5 w-5" />}
             </div>
             <div>

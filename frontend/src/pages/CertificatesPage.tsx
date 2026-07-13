@@ -26,7 +26,7 @@ export default function CertificatesPage() {
             <Card key={course.id} className="overflow-hidden">
               <div className="relative border-b border-border bg-gradient-to-br from-dark to-dark-muted p-6 text-dark-foreground">
                 <div className="flex items-start justify-between">
-                  <Award className={unlocked ? "h-10 w-10 text-warning" : "h-10 w-10 text-slate-600"} />
+                  <Award className={unlocked ? "h-10 w-10 text-warning" : "h-10 w-10 text-muted-foreground"} />
                   {unlocked ? (
                     <Badge color="success">
                       <CheckCircle2 className="h-3 w-3" /> Earned
@@ -35,11 +35,11 @@ export default function CertificatesPage() {
                     <Badge color="muted">{pct}% complete</Badge>
                   )}
                 </div>
-                <p className="mt-4 text-xs uppercase tracking-wide text-slate-400">
+                <p className="mt-4 text-xs uppercase tracking-wide text-muted-foreground">
                   Certificate of Completion
                 </p>
                 <h3 className="text-balance text-lg font-bold">{course.title}</h3>
-                <p className="mt-2 text-sm text-slate-300">
+                <p className="mt-2 text-sm text-muted-foreground">
                   Awarded to <span className="font-semibold text-white">{user?.name}</span>
                 </p>
               </div>

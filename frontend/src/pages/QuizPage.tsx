@@ -41,7 +41,7 @@ export default function QuizPage({ listMode = false }: { listMode?: boolean }) {
   const quiz = quizzes.find((q) => q.id === quizId)
   if (!quiz) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-slate-100 p-6">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-background p-6">
         <Card className="w-full max-w-md p-8 text-center">
           <ShieldAlert className="mx-auto h-12 w-12 text-warning" />
           <h1 className="mt-4 text-xl font-bold text-foreground">Quiz not found</h1>
@@ -95,7 +95,7 @@ function QuizList({
               className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between"
             >
               <div className="flex items-center gap-4">
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50 text-primary">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                   <FileQuestion className="h-7 w-7" />
                 </div>
                 <div>
@@ -195,10 +195,10 @@ function QuizExam({ quiz }: { quiz: QuizDoc }) {
 
   const timeColor =
     remaining <= 30
-      ? "text-danger bg-red-50 border-danger"
+      ? "text-danger bg-danger/10 border-danger"
       : remaining <= 60
-        ? "text-warning bg-amber-50 border-warning"
-        : "text-primary bg-indigo-50 border-primary/30"
+        ? "text-warning bg-warning/10 border-warning"
+        : "text-primary bg-primary/10 border-primary/30"
 
   if (submitted) {
     const passed = score >= quiz.passingScore
@@ -209,7 +209,7 @@ function QuizExam({ quiz }: { quiz: QuizDoc }) {
           <div
             className={cn(
               "mx-auto flex h-20 w-20 items-center justify-center rounded-full",
-              passed ? "bg-emerald-50 text-success" : "bg-red-50 text-danger",
+              passed ? "bg-success/10 text-success" : "bg-danger/10 text-danger",
             )}
           >
             {passed ? <Trophy className="h-10 w-10" /> : <XCircle className="h-10 w-10" />}
@@ -271,7 +271,7 @@ function QuizExam({ quiz }: { quiz: QuizDoc }) {
   }
 
   return (
-    <div className="min-h-screen bg-slate-100">
+    <div className="min-h-screen bg-background">
       {/* Slim exam header */}
       <header className="sticky top-0 z-20 border-b border-border bg-card">
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-4 py-3">
@@ -333,7 +333,7 @@ function QuizExam({ quiz }: { quiz: QuizDoc }) {
                     className={cn(
                       "flex w-full items-center gap-3 rounded-xl border-2 p-4 text-left transition-all duration-300",
                       selected
-                        ? "border-primary bg-indigo-50"
+                        ? "border-primary bg-primary/10"
                         : "border-border bg-card hover:border-primary/40 hover:bg-muted/40",
                     )}
                   >
