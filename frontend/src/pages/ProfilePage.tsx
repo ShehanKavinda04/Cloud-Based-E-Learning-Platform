@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Mail, Shield, Save, Bell, Moon, Globe } from "lucide-react"
 import { Card, Badge, Button } from "@/components/ui/Primitives"
 import { useApp } from "@/store/AppContext"
@@ -12,11 +12,28 @@ export default function ProfilePage() {
   const [saved, setSaved] = useState(false)
 
   const toggles = [
-    { label: "Email notifications", icon: Bell, on: true },
-    { label: "Dark mode", icon: Moon, on: false },
-    { label: "Public profile", icon: Globe, on: true },
+    { label: "Email notifications", icon: Bell },
+    { label: "Dark mode", icon: Moon },
+    { label: "Public profile", icon: Globe },
   ]
-  const [switches, setSwitches] = useState(toggles.map((t) => t.on))
+
+  const [switches, setSwitches] = useState(() => [
+    true, // Email notifications
+    document.documentElement.classList.contains("dark"), // Dark mode (read from DOM)
+    true, // Public profile
+  ])
+
+  // Sync dark mode toggle state with document.documentElement.classList
+  useEffect(() => {
+    const isDark = switches[1]
+    if (isDark) {
+      document.documentElement.classList.add("dark")
+      localStorage.setItem("theme", "dark")
+    } else {
+      document.documentElement.classList.remove("dark")
+      localStorage.setItem("theme", "light")
+    }
+  }, [switches])
 
   function save() {
     if (user) setUser({ ...user, name })
@@ -88,27 +105,36 @@ export default function ProfilePage() {
             {toggles.map((t, i) => {
               const Icon = t.icon
               return (
-                <div key={t.label} className="flex items-center justify-between py-2.5">
+                <label
+                  key={t.label}
+                  className="flex items-center justify-between py-2.5 cursor-pointer select-none group"
+                >
                   <div className="flex items-center gap-3">
-                    <Icon className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm text-foreground">{t.label}</span>
+                    <Icon className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+                    <span className="text-sm text-foreground group-hover:text-primary transition-colors">
+                      {t.label}
+                    </span>
                   </div>
-                  <button
-                    onClick={() =>
+                  <input
+                    type="checkbox"
+                    checked={switches[i]}
+                    onChange={() =>
                       setSwitches((s) => s.map((v, idx) => (idx === i ? !v : v)))
                     }
+                    className="sr-only"
+                  />
+                  <div
                     className={`relative h-6 w-11 rounded-full transition-colors duration-300 ${
                       switches[i] ? "bg-primary" : "bg-muted"
                     }`}
-                    aria-label={t.label}
                   >
                     <span
                       className={`absolute top-0.5 h-5 w-5 rounded-full bg-card shadow-sm transition-transform duration-300 ${
                         switches[i] ? "translate-x-5" : "translate-x-0.5"
                       }`}
                     />
-                  </button>
-                </div>
+                  </div>
+                </label>
               )
             })}
           </div>

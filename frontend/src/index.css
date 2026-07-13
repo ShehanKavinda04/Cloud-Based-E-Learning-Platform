@@ -73,3 +73,22 @@ body {
 .thin-scroll::-webkit-scrollbar-track {
   background: transparent;
 }
+
+.dark .thin-scroll::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+
+.dark {
+  --color-background: #0f172a;
+  --color-foreground: #f8fafc;
+
+  --color-card: #1e293b;
+  --color-card-foreground: #f8fafc;
+
+  --color-muted: #334155;
+  --color-muted-foreground: #94a3b8;
+
+  --color-border: #334155;
+  --color-input: #334155;
+  --color-ring: #818cf8;
+}
