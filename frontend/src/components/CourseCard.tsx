@@ -25,7 +25,7 @@ export function CourseCard({ course }: { course: CourseDoc }) {
         >
           <PlayCircle className="h-14 w-14 text-white drop-shadow-lg" />
         </button>
-        <Badge color="primary" className="absolute left-3 top-3 bg-card/90">
+        <Badge className="absolute left-3 top-3 bg-background/90 text-foreground backdrop-blur-md border-none shadow-sm font-semibold">
           {course.category}
         </Badge>
       </div>

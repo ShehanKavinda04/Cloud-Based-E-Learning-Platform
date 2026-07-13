@@ -101,7 +101,7 @@ export function VideoPlayer({ title }: { title: string }) {
   return (
     <div
       ref={containerRef}
-      className="group relative aspect-video w-full overflow-hidden rounded-2xl bg-dark shadow-lg"
+      className="group relative aspect-video w-full overflow-hidden rounded-2xl bg-black shadow-lg"
     >
       <video
         ref={videoRef}
