@@ -6,6 +6,7 @@ import {
 } from "lucide-react"
 import { Card, Badge } from "@/components/ui/Primitives"
 import { useApp } from "@/store/AppContext"
+import { cn } from "@/lib/utils"
 
 // Removed static KPIS and WEEKLY to compute them dynamically inside the component
 
@@ -122,6 +123,25 @@ export default function ConsolePage() {
   ]
   const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
+  // Dynamic Calendar Logic
+  const today = new Date();
+  const currentMonth = today.getMonth();
+  const currentYear = today.getFullYear();
+  
+  const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  
+  const calendarDays = [];
+  for (let i = 0; i < firstDayOfMonth; i++) {
+    calendarDays.push(null);
+  }
+  for (let i = 1; i <= daysInMonth; i++) {
+    calendarDays.push(i);
+  }
+
+  // Generate random schedule dates for visual mockup
+  const scheduledDates = [3, 7, 12, 14, 18, 22, 25, 29];
+
   return (
     <div className="mx-auto max-w-6xl space-y-6 animate-fade-in">
       <div>
@@ -174,28 +194,53 @@ export default function ConsolePage() {
           </div>
         </Card>
 
-        {/* Top courses */}
-        <Card className="p-6">
-          <h3 className="font-bold text-foreground">Top Courses</h3>
-          <p className="text-sm text-muted-foreground">By enrollment</p>
-          <div className="mt-4 space-y-3">
-            {[...courses].sort((a, b) => b.students - a.students).slice(0, 4).map((c) => {
-              const max = Math.max(...courses.map((x) => x.students), 1)
+        {/* Lecture Calendar */}
+        <Card className="p-6 flex flex-col border border-border/50 shadow-sm">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="font-bold text-foreground">Lecture Calendar</h3>
+              <p className="text-sm font-medium text-primary mt-0.5">{today.toLocaleDateString('default', { month: 'long', year: 'numeric' })}</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground"><span className="h-2 w-2 rounded-full bg-primary"></span> Today</span>
+              <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground"><span className="h-2 w-2 rounded-full bg-warning"></span> Lecture</span>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-7 gap-2 text-center mb-3">
+            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(d => (
+              <div key={d} className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{d}</div>
+            ))}
+          </div>
+          <div className="grid grid-cols-7 gap-2 flex-1">
+            {calendarDays.map((day, idx) => {
+              if (!day) return <div key={`empty-${idx}`} className="p-2" />;
+              const isToday = day === today.getDate();
+              const hasLecture = scheduledDates.includes(day);
+              
               return (
-                <div key={c.id} className="flex items-center gap-3">
-                  <img src={c.thumbnail} alt="" className="h-10 w-10 rounded-lg object-cover" />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-foreground">{c.title}</p>
-                    <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                      <div
-                        className="h-full rounded-full bg-success"
-                        style={{ width: `${(c.students / max) * 100}%` }}
-                      />
+                <div key={day} className="relative flex flex-col items-center justify-center p-2 rounded-xl transition-all hover:bg-muted/50 cursor-pointer group h-12">
+                  <span className={cn(
+                    "text-sm font-semibold z-10",
+                    isToday ? "text-white" : "text-foreground",
+                  )}>{day}</span>
+                  
+                  {isToday && (
+                    <div className="absolute inset-0 bg-primary rounded-xl shadow-md shadow-primary/20 -z-0"></div>
+                  )}
+                  
+                  {hasLecture && (
+                    <div className={cn(
+                      "absolute bottom-2 h-1.5 w-1.5 rounded-full z-10",
+                      isToday ? "bg-white" : "bg-warning shadow-[0_0_8px_rgba(var(--color-warning),0.8)]"
+                    )}></div>
+                  )}
+
+                  {hasLecture && (
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden w-max px-2.5 py-1 text-xs font-medium text-white bg-dark rounded-md shadow-xl group-hover:block z-50 animate-fade-in after:content-[''] after:absolute after:top-full after:left-1/2 after:-translate-x-1/2 after:border-4 after:border-transparent after:border-t-dark">
+                      Scheduled Lecture
                     </div>
-                  </div>
-                  <span className="text-sm font-semibold text-muted-foreground">
-                    {(c.students / 1000).toFixed(1)}k
-                  </span>
+                  )}
                 </div>
               )
             })}
