@@ -47,6 +47,7 @@ interface AppState {
   applyCourse: (courseId: string) => void
   approveApplication: (appId: string) => Promise<void>
   rejectApplication: (appId: string) => void
+  publishQuiz: (quiz: QuizDoc) => Promise<void>
   loading: boolean
 }
 
@@ -288,6 +289,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setCourseApplications((prev) => prev.filter((a) => a.id !== appId))
   }
 
+  const publishQuiz = async (quiz: QuizDoc) => {
+    setQuizzes((prev) => [...prev, quiz])
+    await dbService.saveQuiz(quiz)
+    addNotification({
+      title: "New Quiz Published",
+      body: `A new assessment "${quiz.title}" is now available.`,
+      timeAgo: "Just now",
+      unread: true,
+    })
+  }
+
   const value = useMemo<AppState>(
     () => ({
       user,
@@ -311,6 +323,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       applyCourse,
       approveApplication,
       rejectApplication,
+      publishQuiz,
       loading,
     }),
     [user, courses, quizzes, progress, notifications, rejectedAdminCourses, courseApplications, loading],
