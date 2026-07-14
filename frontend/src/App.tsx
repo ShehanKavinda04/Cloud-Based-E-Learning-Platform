@@ -9,6 +9,7 @@ import QuizPage from "./pages/QuizPage"
 import CertificatesPage from "./pages/CertificatesPage"
 import ProfilePage from "./pages/ProfilePage"
 import ConsolePage from "./pages/ConsolePage"
+import AdminCourseReviewPage from "./pages/AdminCourseReviewPage"
 import StudentAboutPage from "./pages/StudentAboutPage"
 import LecturesAboutPage from "./pages/LecturesAboutPage"
 import type { ReactNode } from "react"
@@ -35,7 +36,7 @@ export default function App() {
 
   return (
     <Routes>
-      <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <AuthPage />} />
+      <Route path="/" element={user ? (user.role === 'admin' ? <Navigate to="/console" replace /> : <Navigate to="/dashboard" replace />) : <AuthPage />} />
 
       {/* Quiz is full-screen (hides sidebar/navbar) */}
       <Route
@@ -64,6 +65,7 @@ export default function App() {
         <Route path="/console" element={<ConsolePage />} />
         <Route path="/student-about" element={<StudentAboutPage />} />
         <Route path="/lectures-about" element={<LecturesAboutPage />} />
+        <Route path="/admin-course-review" element={<AdminCourseReviewPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />
