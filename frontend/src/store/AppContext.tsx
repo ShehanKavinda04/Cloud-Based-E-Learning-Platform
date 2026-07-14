@@ -44,15 +44,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Listen to Auth State Changes & Load User Data
   useEffect(() => {
+    let intervalId: NodeJS.Timeout
+
     const unsubscribe = dbService.onAuthStateChangedListener(async (currentUser) => {
       try {
         if (currentUser) {
           setUser(currentUser)
 
-          // Fetch Course Outline & Quizzes (live Firebase or Mock storage fallback)
-          const { courses: dbCourses, quizzes: dbQuizzes } = await dbService.fetchCoursesAndQuizzes()
-          setCourses(dbCourses)
-          setQuizzes(dbQuizzes)
+          const fetchLive = async () => {
+            const { courses: dbCourses, quizzes: dbQuizzes } = await dbService.fetchCoursesAndQuizzes()
+            setCourses(dbCourses)
+            setQuizzes(dbQuizzes)
+          }
+          
+          // Initial fetch
+          await fetchLive()
+
+          // Poll every 3 seconds for real-time updates from the database
+          intervalId = setInterval(fetchLive, 3000)
 
           // Fetch student progress
           const progressMap = await dbService.fetchProgress(currentUser.uid)
@@ -63,6 +72,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           setProgress({})
           setCourses([])
           setQuizzes([])
+          if (intervalId) clearInterval(intervalId)
         }
       } catch (err) {
         console.error("Error loading application context data:", err)
@@ -71,7 +81,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
     })
 
-    return () => unsubscribe()
+    return () => {
+      unsubscribe()
+      if (intervalId) clearInterval(intervalId)
+    }
   }, [])
 
   const toggleLesson = async (courseId: string, lessonId: string) => {
