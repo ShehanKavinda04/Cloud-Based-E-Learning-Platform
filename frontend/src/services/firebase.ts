@@ -44,7 +44,14 @@ function saveMockUser(user: UserDoc) {
 async function loginMock(email: string, password: string, role: UserRole): Promise<UserDoc> {
   const users = getMockUsers()
   let user = users.find((u) => u.email === email)
-  if (!user) {
+  if (user) {
+    // For mock testing purposes, allow role switching upon login so UI tabs work correctly
+    if (user.role !== role) {
+      user.role = role
+      user.avatar = role === "instructor" ? AVATARS[1] : role === "admin" ? AVATARS[2] : AVATARS[0]
+      saveMockUser(user)
+    }
+  } else {
     user = {
       uid: `mock_${Math.random().toString(36).slice(2, 10)}`,
       name: email.split("@")[0].replace(/[._]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
