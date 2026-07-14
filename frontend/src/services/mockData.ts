@@ -183,6 +183,106 @@ export const COURSES: CourseDoc[] = [
     resources: [{ id: "r1", name: "Deployment Checklist.pdf", size: "0.9 MB", type: "pdf" }],
     forum: [],
   },
+  {
+    id: "python-django",
+    title: "Full-Stack Python with Django",
+    instructor: "David Miller",
+    instructorAvatar: "/avatars/instructor.png",
+    category: "Web Development",
+    thumbnail: "/courses/react.png",
+    description: "Build robust backend APIs and dynamic web apps with Python and Django.",
+    rating: 4.8,
+    students: 11200,
+    totalLessons: 5,
+    level: "Intermediate",
+    modules: [
+      {
+        id: "m1",
+        title: "Django Basics",
+        lessons: [
+          { id: "l1", title: "Intro to Django", duration: "10:10", type: "video", videoUrl: "big-buck" },
+          { id: "l2", title: "Models and ORM", duration: "18:40", type: "video", videoUrl: "big-buck" }
+        ],
+      },
+      {
+        id: "m2",
+        title: "Advanced Django",
+        lessons: [
+          { id: "l3", title: "Django REST Framework", duration: "25:15", type: "video", videoUrl: "big-buck" },
+          { id: "l4", title: "Authentication", duration: "15:20", type: "video", videoUrl: "big-buck" },
+          { id: "l5", title: "Deployment", duration: "20:00", type: "video", videoUrl: "big-buck" }
+        ],
+      }
+    ],
+    resources: [],
+    forum: [],
+  },
+  {
+    id: "flutter-mobile",
+    title: "Mobile App Development with Flutter",
+    instructor: "Sarah Jenkins",
+    instructorAvatar: "/avatars/instructor.png",
+    category: "Web Development",
+    thumbnail: "/courses/design.png",
+    description: "Create beautiful, natively compiled applications for mobile, web, and desktop from a single codebase.",
+    rating: 4.7,
+    students: 8400,
+    totalLessons: 4,
+    level: "Beginner",
+    modules: [
+      {
+        id: "m1",
+        title: "Flutter Basics",
+        lessons: [
+          { id: "l1", title: "Dart Fundamentals", duration: "15:30", type: "video", videoUrl: "big-buck" },
+          { id: "l2", title: "Building UIs", duration: "22:15", type: "video", videoUrl: "big-buck" }
+        ]
+      },
+      {
+        id: "m2",
+        title: "State and API",
+        lessons: [
+          { id: "l3", title: "State Management", duration: "20:45", type: "video", videoUrl: "big-buck" },
+          { id: "l4", title: "Fetching Data", duration: "18:10", type: "video", videoUrl: "big-buck" }
+        ]
+      }
+    ],
+    resources: [],
+    forum: [],
+  },
+  {
+    id: "ethical-hacking",
+    title: "Cybersecurity & Ethical Hacking",
+    instructor: "Kevin Mitnick Jr",
+    instructorAvatar: "/avatars/instructor.png",
+    category: "Cloud",
+    thumbnail: "/courses/cloud.png",
+    description: "Learn network security, penetration testing, and ethical hacking from the ground up.",
+    rating: 4.9,
+    students: 15300,
+    totalLessons: 4,
+    level: "Advanced",
+    modules: [
+      {
+        id: "m1",
+        title: "Network Security",
+        lessons: [
+          { id: "l1", title: "Intro to Networking", duration: "12:00", type: "video", videoUrl: "big-buck" },
+          { id: "l2", title: "Vulnerability Scanning", duration: "25:40", type: "video", videoUrl: "big-buck" }
+        ]
+      },
+      {
+        id: "m2",
+        title: "Exploitation",
+        lessons: [
+          { id: "l3", title: "Web App Hacking", duration: "30:15", type: "video", videoUrl: "big-buck" },
+          { id: "l4", title: "Privilege Escalation", duration: "18:50", type: "video", videoUrl: "big-buck" }
+        ]
+      }
+    ],
+    resources: [],
+    forum: [],
+  }
 ]
 
 // Initial per-course completed lessons for the demo student.
@@ -191,6 +291,9 @@ export const INITIAL_PROGRESS: Record<string, string[]> = {
   "data-science-101": ["l1", "l2"],
   "ux-design": ["l1"],
   "cloud-devops": [],
+  "python-django": [],
+  "flutter-mobile": [],
+  "ethical-hacking": [],
 }
 
 export const QUIZ: QuizDoc = {

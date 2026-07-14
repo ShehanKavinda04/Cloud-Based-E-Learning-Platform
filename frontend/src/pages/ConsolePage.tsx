@@ -29,15 +29,7 @@ interface DraftQuestion {
   options: DraftOption[]
 }
 
-const KPIS = [
-  { label: "Total Students", value: "35,240", delta: "+12.4%", icon: Users, color: "text-primary bg-primary/10" },
-  { label: "Active Hours", value: "128,900", delta: "+8.1%", icon: Clock, color: "text-success bg-success/10" },
-  { label: "Avg. Course Rating", value: "4.8", delta: "+0.2", icon: Star, color: "text-warning bg-warning/10" },
-]
-
-// Simple weekly bar chart data (enrollments)
-const WEEKLY = [42, 58, 39, 71, 65, 88, 76]
-const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+// Removed static KPIS and WEEKLY to compute them dynamically inside the component
 
 export default function ConsolePage() {
   const { courses, setCourses, setQuizzes } = useApp()
@@ -59,6 +51,31 @@ export default function ConsolePage() {
       ],
     },
   ])
+
+  // --- Dynamic Data Calculations ---
+  const totalStudents = courses.reduce((acc, c) => acc + c.students, 0)
+  const avgRating = courses.length > 0 
+    ? (courses.reduce((acc, c) => acc + c.rating, 0) / courses.length).toFixed(1) 
+    : "0.0"
+  const activeHours = Math.round(totalStudents * 5.8) // Derived active hours estimate
+
+  const dynamicKPIs = [
+    { label: "Total Students", value: totalStudents.toLocaleString(), delta: "+12.4%", icon: Users, color: "text-primary bg-primary/10" },
+    { label: "Active Hours", value: activeHours.toLocaleString(), delta: "+8.1%", icon: Clock, color: "text-success bg-success/10" },
+    { label: "Avg. Course Rating", value: avgRating, delta: "+0.2", icon: Star, color: "text-warning bg-warning/10" },
+  ]
+
+  const weeklyTotal = Math.max(Math.round(totalStudents * 0.02), 100) // 2% of total
+  const dynamicWeekly = [
+    Math.round(weeklyTotal * 0.1),
+    Math.round(weeklyTotal * 0.15),
+    Math.round(weeklyTotal * 0.08),
+    Math.round(weeklyTotal * 0.2),
+    Math.round(weeklyTotal * 0.12),
+    Math.round(weeklyTotal * 0.25),
+    Math.round(weeklyTotal * 0.1),
+  ]
+  const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
   // Sync new uploaded assets into course resources
   const addResourceToDb = async (name: string, type: "video" | "doc") => {
@@ -253,7 +270,7 @@ export default function ConsolePage() {
 
       {/* KPIs */}
       <div className="grid gap-4 sm:grid-cols-3">
-        {KPIS.map((k) => {
+        {dynamicKPIs.map((k) => {
           const Icon = k.icon
           return (
             <Card key={k.label} className="p-5">
@@ -279,12 +296,12 @@ export default function ConsolePage() {
           <h3 className="font-bold text-foreground">Weekly Enrollments</h3>
           <p className="text-sm text-muted-foreground">New students this week</p>
           <div className="mt-6 flex h-40 items-end justify-between gap-3">
-            {WEEKLY.map((v, i) => (
+            {dynamicWeekly.map((v, i) => (
               <div key={DAYS[i]} className="flex flex-1 flex-col items-center gap-2">
                 <div className="flex w-full flex-1 items-end">
                   <div
                     className="w-full rounded-t-lg bg-primary/80 transition-all duration-500 hover:bg-primary"
-                    style={{ height: `${(v / Math.max(...WEEKLY)) * 100}%` }}
+                    style={{ height: `${(v / Math.max(...dynamicWeekly)) * 100}%` }}
                     title={`${v} enrollments`}
                   />
                 </div>
@@ -299,7 +316,7 @@ export default function ConsolePage() {
           <h3 className="font-bold text-foreground">Top Courses</h3>
           <p className="text-sm text-muted-foreground">By enrollment</p>
           <div className="mt-4 space-y-3">
-            {courses.slice(0, 4).map((c) => {
+            {[...courses].sort((a, b) => b.students - a.students).slice(0, 4).map((c) => {
               const max = Math.max(...courses.map((x) => x.students), 1)
               return (
                 <div key={c.id} className="flex items-center gap-3">

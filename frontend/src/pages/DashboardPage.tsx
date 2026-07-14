@@ -5,15 +5,51 @@ import { CourseCard } from "@/components/CourseCard"
 import { useApp } from "@/store/AppContext"
 
 export default function DashboardPage() {
-  const { user, overallProgressPct, courses } = useApp()
+  const { user, overallProgressPct, courses, progress, courseProgressPct } = useApp()
   const navigate = useNavigate()
   const overall = overallProgressPct()
 
+  // 1. Enrolled Courses (All available courses for now, as user has access to all)
+  const enrolledCourses = courses.length
+
+  // 2. Hours Learned
+  let totalSeconds = 0
+  Object.entries(progress).forEach(([courseId, lessonIds]) => {
+    const course = courses.find((c) => c.id === courseId)
+    if (course) {
+      course.modules.forEach((m) => {
+        m.lessons.forEach((lesson) => {
+          if (lessonIds.includes(lesson.id) && lesson.duration) {
+            if (lesson.duration.includes("min")) {
+              totalSeconds += parseInt(lesson.duration) * 60
+            } else if (lesson.duration.includes(":")) {
+              const [mins, secs] = lesson.duration.split(":")
+              totalSeconds += (parseInt(mins) || 0) * 60 + (parseInt(secs) || 0)
+            }
+          }
+        })
+      })
+    }
+  })
+  
+  const hours = totalSeconds / 3600
+  const hoursLearned = parseFloat(hours.toFixed(1)) + "h"
+
+  // 3. Certificates (Courses at 100%)
+  const certificates = Object.keys(progress).filter(
+    (courseId) => courseProgressPct(courseId) === 100
+  ).length
+
+  // 4. Day Streak (Derived from user.createdAt)
+  const streak = user?.createdAt 
+    ? Math.max(1, Math.floor((Date.now() - user.createdAt) / (1000 * 60 * 60 * 24))) 
+    : 1
+
   const stats = [
-    { label: "Enrolled Courses", value: courses.length, icon: BookOpen, color: "text-primary bg-primary/10" },
-    { label: "Hours Learned", value: "48h", icon: Clock, color: "text-success bg-success/10" },
-    { label: "Certificates", value: 2, icon: Trophy, color: "text-warning bg-warning/10" },
-    { label: "Day Streak", value: 12, icon: Flame, color: "text-danger bg-danger/10" },
+    { label: "Enrolled Courses", value: enrolledCourses, icon: BookOpen, color: "text-primary bg-primary/10" },
+    { label: "Hours Learned", value: hoursLearned, icon: Clock, color: "text-success bg-success/10" },
+    { label: "Certificates", value: certificates, icon: Trophy, color: "text-warning bg-warning/10" },
+    { label: "Day Streak", value: streak, icon: Flame, color: "text-danger bg-danger/10" },
   ]
 
   const firstName = user?.name?.split(" ")[0] ?? "there"
