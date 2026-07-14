@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react"
-import { Mail, Shield, Save, Bell, Moon, Globe } from "lucide-react"
+import { Mail, Shield, Save, Bell, Moon, Globe, Trash2, Upload } from "lucide-react"
 import { Card, Badge, Button } from "@/components/ui/Primitives"
 import { useApp } from "@/store/AppContext"
 
 export default function ProfilePage() {
   const { user, setUser } = useApp()
   const [name, setName] = useState(user?.name ?? "")
+  const [avatar, setAvatar] = useState(user?.avatar || "/avatars/student.png")
   const [bio, setBio] = useState(
     "Lifelong learner passionate about technology, design, and building useful things.",
   )
@@ -36,7 +37,7 @@ export default function ProfilePage() {
   }, [switches])
 
   function save() {
-    if (user) setUser({ ...user, name })
+    if (user) setUser({ ...user, name, avatar })
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
   }
@@ -49,11 +50,38 @@ export default function ProfilePage() {
         <div className="h-28 bg-gradient-to-r from-primary to-indigo-400" />
         <div className="px-6 pb-6">
           <div className="-mt-12 flex flex-col items-start gap-4 sm:flex-row sm:items-end">
-            <img
-              src={user?.avatar || "/avatars/student.png"}
-              alt="Your avatar"
-              className="h-24 w-24 rounded-2xl border-4 border-card object-cover shadow-md"
-            />
+            <div className="relative group shrink-0">
+              <img
+                src={avatar}
+                alt="Your avatar"
+                className="h-24 w-24 rounded-2xl border-4 border-card object-cover shadow-md transition-opacity group-hover:opacity-80"
+              />
+              <div className="absolute inset-0 rounded-2xl border-4 border-transparent bg-black/40 opacity-0 transition-opacity group-hover:opacity-100 flex items-center justify-center gap-2 backdrop-blur-[2px]">
+                <label className="cursor-pointer p-1.5 hover:bg-white/20 rounded-lg text-white transition-colors" title="Upload new photo">
+                  <Upload className="h-4 w-4" />
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    className="hidden" 
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (file) {
+                        const reader = new FileReader()
+                        reader.onload = (e) => setAvatar(e.target?.result as string)
+                        reader.readAsDataURL(file)
+                      }
+                    }}
+                  />
+                </label>
+                <button 
+                  onClick={() => setAvatar("/avatars/student.png")}
+                  className="cursor-pointer p-1.5 hover:bg-destructive/80 hover:text-white rounded-lg text-white/80 transition-colors"
+                  title="Remove photo"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
             <div className="pb-1">
               <h2 className="text-xl font-bold text-foreground">{user?.name}</h2>
               <div className="mt-1 flex items-center gap-2">
