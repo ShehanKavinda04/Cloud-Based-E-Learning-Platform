@@ -3,15 +3,17 @@ import {
   Clock,
   Star,
   TrendingUp,
+  CheckCircle2,
+  XCircle,
 } from "lucide-react"
-import { Card, Badge } from "@/components/ui/Primitives"
+import { Card, Badge, Button } from "@/components/ui/Primitives"
 import { useApp } from "@/store/AppContext"
 import { cn } from "@/lib/utils"
 
 // Removed static KPIS and WEEKLY to compute them dynamically inside the component
 
 export default function ConsolePage() {
-  const { courses } = useApp()
+  const { courses, courseApplications, approveApplication, rejectApplication } = useApp()
 
   const lecturersMap = courses.reduce((acc, course) => {
     if (!acc[course.instructor]) {
@@ -271,6 +273,58 @@ export default function ConsolePage() {
           </div>
         </Card>
 
+        {/* Course Applications Panel */}
+        <Card className="p-6">
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <h3 className="font-bold text-foreground">Course Applications</h3>
+              <p className="text-sm text-muted-foreground">Review student enrollment requests</p>
+            </div>
+            <Badge color="warning" className="text-sm px-3 py-1 shadow-sm font-medium bg-warning/10 text-warning border-warning/20">
+              Pending: {courseApplications.length}
+            </Badge>
+          </div>
+
+          <div className="space-y-4 max-h-[400px] overflow-y-auto thin-scroll pr-2">
+            {courseApplications.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-8 text-center border border-dashed border-border rounded-xl bg-card/50">
+                <p className="text-muted-foreground text-sm">No pending course applications.</p>
+              </div>
+            ) : (
+              courseApplications.map((app) => (
+                <div key={app.id} className="flex flex-col gap-3 rounded-xl border border-border p-4 transition-all hover:border-primary/30 hover:shadow-sm">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h4 className="font-bold text-foreground text-base">{app.studentName}</h4>
+                      <p className="text-sm text-primary font-medium mt-0.5">{app.courseTitle}</p>
+                    </div>
+                    <span className="text-xs text-muted-foreground">{app.timestamp}</span>
+                  </div>
+                  
+                  <div className="flex items-center gap-3 mt-2">
+                    <Button 
+                      variant="success" 
+                      className="flex-1 shadow-sm hover:shadow-success/20 transition-all font-semibold"
+                      onClick={() => approveApplication(app.id)}
+                    >
+                      <CheckCircle2 className="mr-2 h-4 w-4" /> Approve
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="flex-1 border-danger/30 text-danger hover:bg-danger/10 hover:text-danger hover:border-danger transition-colors font-semibold"
+                      onClick={() => rejectApplication(app.id)}
+                    >
+                      <XCircle className="mr-2 h-4 w-4" /> Reject
+                    </Button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </Card>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
         {/* Students Analytics Panel */}
         <Card className="p-6">
           <div className="mb-6 flex items-center justify-between">

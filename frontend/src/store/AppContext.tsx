@@ -10,6 +10,15 @@ export interface Notification {
   unread: boolean
 }
 
+export interface CourseApplication {
+  id: string
+  studentId: string
+  studentName: string
+  courseId: string
+  courseTitle: string
+  timestamp: string
+}
+
 const INITIAL_NOTIFICATIONS: Notification[] = [
   { id: "n1", title: "New lesson unlocked", body: "Module 3 of Advanced React is now available.", timeAgo: "10m ago", unread: true },
   { id: "n2", title: "Quiz reminder", body: "Your React final assessment closes in 2 days.", timeAgo: "1h ago", unread: true },
@@ -33,6 +42,11 @@ interface AppState {
   publishAdminCourse: (adminCourse: any) => Promise<void>
   rejectAdminCourse: (courseId: string) => void
   rejectedAdminCourses: string[]
+  addNotification: (notif: Omit<Notification, "id">) => void
+  courseApplications: CourseApplication[]
+  applyCourse: (courseId: string) => void
+  approveApplication: (appId: string) => Promise<void>
+  rejectApplication: (appId: string) => void
   loading: boolean
 }
 
@@ -45,6 +59,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [progress, setProgress] = useState<Record<string, string[]>>({})
   const [notifications, setNotifications] = useState<Notification[]>(INITIAL_NOTIFICATIONS)
   const [rejectedAdminCourses, setRejectedAdminCourses] = useState<string[]>([])
+  const [courseApplications, setCourseApplications] = useState<CourseApplication[]>([
+    {
+      id: "app1",
+      studentId: "student123",
+      studentName: "James Carter",
+      courseId: "c1",
+      courseTitle: "Advanced React & Frontend Architecture",
+      timestamp: "Yesterday"
+    },
+    {
+      id: "app2",
+      studentId: "student456",
+      studentName: "Sophia Lee",
+      courseId: "c2",
+      courseTitle: "Cloud Computing & DevOps Essentials",
+      timestamp: "2 days ago"
+    }
+  ])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -145,6 +177,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setNotifications((prev) => prev.map((n) => ({ ...n, unread: false })))
   }
 
+  const addNotification = (notif: Omit<Notification, "id">) => {
+    setNotifications((prev) => [
+      { id: `n_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`, ...notif },
+      ...prev,
+    ])
+  }
+
   const publishAdminCourse = async (adminCourse: any) => {
     const newCourse: CourseDoc = {
       id: adminCourse.id,
@@ -177,6 +216,54 @@ export function AppProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("nimbus_rejected_courses", JSON.stringify(next))
   }
 
+  const applyCourse = (courseId: string) => {
+    const course = courses.find((c) => c.id === courseId)
+    if (!course || !user) return
+    setCourseApplications((prev) => [
+      {
+        id: `app_${Date.now()}`,
+        studentId: user.uid,
+        studentName: user.name,
+        courseId,
+        courseTitle: course.title,
+        timestamp: "Just now",
+      },
+      ...prev,
+    ])
+    addNotification({
+      title: "Request to Course",
+      body: `${user.name} wants to join ${course.title}.`,
+      timeAgo: "Just now",
+      unread: true,
+    })
+  }
+
+  const approveApplication = async (appId: string) => {
+    const app = courseApplications.find((a) => a.id === appId)
+    if (!app) return
+    
+    // In a real app we'd enroll the specific student, but here we can just enroll the current user if they match
+    // Actually we will simulate adding to progress for that student in the mock DB.
+    try {
+      const studentProgress = await dbService.fetchProgress(app.studentId)
+      studentProgress[app.courseId] = []
+      await dbService.saveProgress(app.studentId, app.courseId, [])
+      
+      // If current user is the one approved, update local progress state
+      if (user && user.uid === app.studentId) {
+        setProgress((prev) => ({ ...prev, [app.courseId]: [] }))
+      }
+    } catch (err) {
+      console.error(err)
+    }
+
+    setCourseApplications((prev) => prev.filter((a) => a.id !== appId))
+  }
+
+  const rejectApplication = (appId: string) => {
+    setCourseApplications((prev) => prev.filter((a) => a.id !== appId))
+  }
+
   const value = useMemo<AppState>(
     () => ({
       user,
@@ -195,9 +282,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
       publishAdminCourse,
       rejectAdminCourse,
       rejectedAdminCourses,
+      addNotification,
+      courseApplications,
+      applyCourse,
+      approveApplication,
+      rejectApplication,
       loading,
     }),
-    [user, courses, quizzes, progress, notifications, rejectedAdminCourses, loading],
+    [user, courses, quizzes, progress, notifications, rejectedAdminCourses, courseApplications, loading],
   )
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>

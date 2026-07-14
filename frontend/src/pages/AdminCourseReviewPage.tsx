@@ -10,16 +10,37 @@ export default function AdminCourseReviewPage() {
   const location = useLocation()
   const navigate = useNavigate()
   const course = location.state?.course
-  const { publishAdminCourse, rejectAdminCourse } = useApp()
+  const { publishAdminCourse, rejectAdminCourse, addNotification } = useApp()
   const [activeTab, setActiveTab] = useState("videos")
+  const [publishing, setPublishing] = useState(false)
+  const [toast, setToast] = useState<{message: string, courseName: string, courseId: string} | null>(null)
 
   if (!course) {
     return <Navigate to="/courses" replace />
   }
 
   const handleApprove = async () => {
+    setPublishing(true)
     await publishAdminCourse(course)
-    navigate("/courses")
+
+    addNotification({
+      title: "Course Published",
+      body: `Your course has been successfully published. Thank you.`,
+      timeAgo: "Just now",
+      unread: true
+    })
+
+    setToast({
+      message: "Successfully Published",
+      courseName: course.title,
+      courseId: course.id
+    })
+
+    setTimeout(() => {
+      setToast(null)
+      setPublishing(false)
+      navigate("/courses")
+    }, 3000)
   }
 
   const handleReject = () => {
@@ -46,11 +67,22 @@ export default function AdminCourseReviewPage() {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" className="border-danger/30 text-danger hover:bg-danger/10 hover:text-danger shadow-sm" onClick={handleReject}>
+          <Button 
+            variant="outline" 
+            disabled={publishing}
+            className="border-danger/30 text-danger hover:bg-danger/10 hover:text-danger shadow-sm disabled:opacity-50" 
+            onClick={handleReject}
+          >
             <XCircle className="mr-2 h-4 w-4" /> Reject
           </Button>
-          <Button variant="success" className="shadow-lg shadow-success/20 hover:shadow-success/30 transition-shadow" onClick={handleApprove}>
-            <CheckCircle2 className="mr-2 h-4 w-4" /> Approve & Publish
+          <Button 
+            variant="success" 
+            disabled={publishing}
+            className="shadow-lg shadow-success/20 hover:shadow-success/30 transition-shadow disabled:opacity-90 disabled:pointer-events-none" 
+            onClick={handleApprove}
+          >
+            <CheckCircle2 className="mr-2 h-4 w-4" /> 
+            {publishing ? "Published" : "Approve & Publish"}
           </Button>
         </div>
       </div>
@@ -243,6 +275,22 @@ export default function AdminCourseReviewPage() {
           )}
         </div>
       </div>
+
+      {/* Success Toast */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-[100] animate-in slide-in-from-bottom-5 fade-in duration-300">
+          <div className="flex items-start gap-4 rounded-xl border border-success/30 bg-success/10 p-4 shadow-lg backdrop-blur-md">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-success text-white shadow-sm">
+              <CheckCircle2 className="h-6 w-6" />
+            </div>
+            <div>
+              <p className="font-bold text-success">{toast.message}</p>
+              <p className="mt-1 text-sm text-foreground">{toast.courseName}</p>
+              <p className="text-xs font-medium text-muted-foreground mt-0.5 uppercase tracking-wider">ID: {toast.courseId}</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

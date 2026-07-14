@@ -8,7 +8,7 @@ import { Button, Badge, Card } from "@/components/ui/Primitives"
 const STUDENT_CATEGORIES = ["All", "Programming", "Computer Science", "Hackathons"]
 
 export default function ApplyCoursesPage() {
-  const { courses, progress, enrollCourse } = useApp()
+  const { user, courses, progress, applyCourse, courseApplications } = useApp()
   const [filter, setFilter] = useState("All")
   const [searchQuery, setSearchQuery] = useState("")
   const [enrollingId, setEnrollingId] = useState<string | null>(null)
@@ -22,10 +22,10 @@ export default function ApplyCoursesPage() {
     return matchesCategory && matchesSearch
   })
 
-  const handleEnroll = async (courseId: string) => {
+  const handleApply = (courseId: string) => {
     setEnrollingId(courseId)
-    await enrollCourse(courseId)
-    setEnrollingId(null)
+    applyCourse(courseId)
+    setTimeout(() => setEnrollingId(null), 1000)
   }
 
   return (
@@ -84,6 +84,7 @@ export default function ApplyCoursesPage() {
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filtered.map((course) => {
             const isEnrolled = progress[course.id] !== undefined
+            const isApplied = user ? courseApplications.some(app => app.studentId === user.uid && app.courseId === course.id) : false
             const isEnrolling = enrollingId === course.id
             
             return (
@@ -100,10 +101,19 @@ export default function ApplyCoursesPage() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-dark/80 via-transparent to-transparent opacity-60 transition-opacity duration-300 group-hover:opacity-80" />
                   
-                  {isEnrolled && (
+                  {isEnrolled ? (
                     <div className="absolute right-3 top-3 flex items-center gap-1.5 rounded-full bg-success/90 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-md shadow-sm">
                       <CheckCircle2 className="h-3 w-3" />
                       Enrolled
+                    </div>
+                  ) : isApplied ? (
+                    <div className="absolute right-3 top-3 flex items-center gap-1.5 rounded-full bg-warning/90 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-md shadow-sm">
+                      Waiting for...
+                    </div>
+                  ) : (
+                    <div className="absolute right-3 top-3 flex items-center gap-1.5 rounded-full bg-success/90 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-md shadow-sm">
+                      <CheckCircle2 className="h-3 w-3" />
+                      Available
                     </div>
                   )}
                   
@@ -150,12 +160,12 @@ export default function ApplyCoursesPage() {
                       </Button>
                     ) : (
                       <Button 
-                        variant="primary" 
-                        className="w-full font-bold shadow-md hover:shadow-primary/25 transition-all"
-                        onClick={() => handleEnroll(course.id)}
-                        disabled={isEnrolling}
+                        variant={isApplied ? "outline" : "primary"}
+                        className={cn("w-full font-bold shadow-md hover:shadow-primary/25 transition-all", isApplied && "border-warning text-warning hover:bg-warning/10 cursor-default")}
+                        onClick={() => !isApplied && handleApply(course.id)}
+                        disabled={isEnrolling || isApplied}
                       >
-                        {isEnrolling ? "Enrolling..." : "Enroll Now"}
+                        {isEnrolling || isApplied ? "Waiting for..." : "Apply Now"}
                       </Button>
                     )}
                   </div>
