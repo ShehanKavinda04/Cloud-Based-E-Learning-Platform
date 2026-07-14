@@ -37,7 +37,7 @@ export default function App() {
 
   return (
     <Routes>
-      <Route path="/" element={user ? (user.role === 'admin' ? <Navigate to="/console" replace /> : <Navigate to="/dashboard" replace />) : <AuthPage />} />
+      <Route path="/" element={user ? (user.role === 'admin' || user.role === 'instructor' ? <Navigate to="/console" replace /> : <Navigate to="/dashboard" replace />) : <AuthPage />} />
 
       {/* Quiz is full-screen (hides sidebar/navbar) */}
       <Route

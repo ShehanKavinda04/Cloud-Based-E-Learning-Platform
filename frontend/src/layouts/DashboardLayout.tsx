@@ -37,13 +37,19 @@ const ADMIN_NAV = [
   { to: "/profile", label: "Profile", icon: UserIcon },
 ]
 
+const INSTRUCTOR_NAV = [
+  { to: "/console", label: "Console", icon: LineChart },
+  { to: "/courses", label: "My Courses", icon: BookOpen },
+  { to: "/profile", label: "Profile", icon: UserIcon },
+]
+
 export default function DashboardLayout() {
   const { user, setUser, notifications, markAllRead } = useApp()
   const navigate = useNavigate()
   const [notifOpen, setNotifOpen] = useState(false)
   const [mobileNav, setMobileNav] = useState(false)
 
-  const nav = user?.role === "admin" ? ADMIN_NAV : STUDENT_NAV
+  const nav = user?.role === "admin" ? ADMIN_NAV : user?.role === "instructor" ? INSTRUCTOR_NAV : STUDENT_NAV
   const unread = notifications.filter((n) => n.unread).length
 
   async function handleLogout() {

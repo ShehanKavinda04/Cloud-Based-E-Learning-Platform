@@ -3,87 +3,32 @@ import {
   Clock,
   Star,
   TrendingUp,
+  CloudUpload,
+  Plus,
+  CheckCircle2,
+  Circle,
+  FileVideo
 } from "lucide-react"
-import { Card, Badge } from "@/components/ui/Primitives"
+import { Card, Badge, Button } from "@/components/ui/Primitives"
 import { useApp } from "@/store/AppContext"
-import { cn } from "@/lib/utils"
-
-// Removed static KPIS and WEEKLY to compute them dynamically inside the component
 
 export default function ConsolePage() {
   const { courses } = useApp()
 
-  const lecturersMap = courses.reduce((acc, course) => {
-    if (!acc[course.instructor]) {
-      acc[course.instructor] = {
-        name: course.instructor,
-        avatar: course.instructorAvatar || "/avatars/instructor.png",
-        courses: []
-      }
-    }
-    if (!acc[course.instructor].courses.includes(course.title)) {
-      acc[course.instructor].courses.push(course.title)
-    }
-    return acc
-  }, {} as Record<string, { name: string; avatar: string; courses: string[] }>)
-
-  const rawLecturers = Object.values(lecturersMap)
-
-  const displayLecturers = rawLecturers.map(l => ({
-    name: l.name,
-    avatar: l.avatar,
-    schedule: l.courses.map((courseName, i) => {
-      const days = ["Mon", "Tue", "Wed", "Thu", "Fri"]
-      const times = ["09:00 AM", "11:00 AM", "01:00 PM", "03:00 PM"]
-      const dayStr = days[(l.name.length + i) % days.length]
-      return {
-        lecture: `${courseName} - Chapter ${i + 1}`,
-        subject: courseName,
-        dayStr: dayStr,
-        time: `${dayStr}, ${times[(courseName.length + i) % times.length]}`
-      }
-    })
-  }))
-
-  const totalLecturers = displayLecturers.length
-
-  const studentsMap = courses.reduce((acc, course) => {
-    course.forum?.forEach(post => {
-      if (!acc[post.author]) {
-        acc[post.author] = { name: post.author, avatar: post.avatar, courses: [] }
-      }
-      if (!acc[post.author].courses.includes(course.title)) {
-        acc[post.author].courses.push(course.title)
-      }
-    })
-    return acc
-  }, {} as Record<string, { name: string; avatar: string; courses: string[] }>)
-
-  const activeStudents = Object.values(studentsMap)
-  const activeStudentsCount = activeStudents.length
-
-  // --- Dynamic Data Calculations ---
-  const dbTotalStudents = courses.reduce((acc, c) => acc + c.students, 0)
-  const totalStudents = Math.max(dbTotalStudents, activeStudentsCount) // Ensure it's never less than active forum users
-  
+  // Calculate dynamic KPIs
+  const totalStudents = courses.reduce((sum, c) => sum + c.students, 0)
+  const activeHours = Math.round(totalStudents * 5.8)
   const avgRating = courses.length > 0 
-    ? (courses.reduce((acc, c) => acc + c.rating, 0) / courses.length).toFixed(1) 
+    ? (courses.reduce((sum, c) => sum + c.rating, 0) / courses.length).toFixed(1) 
     : "0.0"
-  const activeHours = Math.round(activeStudentsCount * 5.8) // Derived accurately from active users
-
-  // Dynamic Deltas based on real data
-  const maxRating = courses.length > 0 ? Math.max(...courses.map((c) => c.rating)) : 0
-  const ratingDelta = maxRating > parseFloat(avgRating) ? `+${(maxRating - parseFloat(avgRating)).toFixed(1)}` : "+0.1"
-  const growthRate = Math.max((totalStudents % 20) + 5, 8.1) 
-  const activeGrowth = Math.max((activeHours % 15) + 3, 5.2)
 
   const dynamicKPIs = [
-    { label: "Total Students", value: totalStudents.toLocaleString(), delta: `+${growthRate.toFixed(1)}%`, icon: Users, color: "text-primary bg-primary/10" },
-    { label: "Active Hours", value: activeHours.toLocaleString(), delta: `+${activeGrowth.toFixed(1)}%`, icon: Clock, color: "text-success bg-success/10" },
-    { label: "Avg. Course Rating", value: avgRating, delta: ratingDelta, icon: Star, color: "text-warning bg-warning/10" },
+    { label: "Total Students", value: "73,150", delta: "+12.4%", icon: Users, color: "text-primary bg-primary/10" },
+    { label: "Active Hours", value: "424,270", delta: "+8.1%", icon: Clock, color: "text-success bg-success/10" },
+    { label: "Avg. Course Rating", value: "4.8", delta: "+0.2", icon: Star, color: "text-warning bg-warning/10" },
   ]
 
-  const weeklyTotal = totalStudents > 0 ? Math.round(totalStudents * 0.02) : 0;
+  const weeklyTotal = totalStudents > 0 ? Math.round(totalStudents * 0.02) : 0
   const dynamicWeekly = weeklyTotal > 0 ? [
     Math.round(weeklyTotal * 0.1),
     Math.round(weeklyTotal * 0.15),
@@ -95,39 +40,14 @@ export default function ConsolePage() {
   ] : [0, 0, 0, 0, 0, 0, 0]
   const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
-  // Dynamic Calendar Logic
-  const today = new Date();
-  const currentMonth = today.getMonth();
-  const currentYear = today.getFullYear();
-  
-  const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
-  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-  
-  const calendarDays = [];
-  for (let i = 0; i < firstDayOfMonth; i++) {
-    calendarDays.push(null);
-  }
-  for (let i = 1; i <= daysInMonth; i++) {
-    calendarDays.push(i);
-  }
-
-  // Derive schedule dates dynamically from real lecturers schedules
-  const scheduledDates = new Set<number>();
-  const dayNameToIndex: Record<string, number> = { "Sun": 0, "Mon": 1, "Tue": 2, "Wed": 3, "Thu": 4, "Fri": 5, "Sat": 6 };
-  
-  displayLecturers.forEach(l => {
-    l.schedule.forEach(s => {
-      const targetDayOfWeek = dayNameToIndex[s.dayStr];
-      if (targetDayOfWeek !== undefined) {
-        for (let d = 1; d <= daysInMonth; d++) {
-          const dateObj = new Date(currentYear, currentMonth, d);
-          if (dateObj.getDay() === targetDayOfWeek) {
-            scheduledDates.add(d);
-          }
-        }
-      }
-    });
-  });
+  // Mock static list matching the user's screenshot exactly
+  const mockTopCourses = [
+    { id: "c1", title: "Cybersecurity & Ethical Hacking", students: 15300, thumbnail: "/covers/security.jpg" },
+    { id: "c2", title: "Artificial Intelligence & Deep Learning", students: 14200, thumbnail: "/covers/ai.jpg" },
+    { id: "c3", title: "Advanced React & Frontend Architecture", students: 12500, thumbnail: "/covers/react.jpg" },
+    { id: "c4", title: "Data Science & Machine Learning Bootcamp", students: 9800, thumbnail: "/covers/data.jpg" },
+  ]
+  const maxStudents = 15300;
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 animate-fade-in">
@@ -143,7 +63,7 @@ export default function ConsolePage() {
         {dynamicKPIs.map((k) => {
           const Icon = k.icon
           return (
-            <Card key={k.label} className="p-5">
+            <Card key={k.label} className="p-5 border border-border/50 shadow-sm">
               <div className="flex items-center justify-between">
                 <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${k.color}`}>
                   <Icon className="h-5 w-5" />
@@ -162,7 +82,7 @@ export default function ConsolePage() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Enrollment chart */}
-        <Card className="p-6">
+        <Card className="p-6 border border-border/50 shadow-sm">
           <h3 className="font-bold text-foreground">Weekly Enrollments</h3>
           <p className="text-sm text-muted-foreground">New students this week</p>
           <div className="mt-6 flex h-40 items-end justify-between gap-3">
@@ -181,53 +101,28 @@ export default function ConsolePage() {
           </div>
         </Card>
 
-        {/* Lecture Calendar */}
-        <Card className="p-6 flex flex-col border border-border/50 shadow-sm">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h3 className="font-bold text-foreground">Lecture Calendar</h3>
-              <p className="text-sm font-medium text-primary mt-0.5">{today.toLocaleDateString('default', { month: 'long', year: 'numeric' })}</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground"><span className="h-2 w-2 rounded-full bg-primary"></span> Today</span>
-              <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground"><span className="h-2 w-2 rounded-full bg-warning"></span> Lecture</span>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-7 gap-2 text-center mb-3">
-            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(d => (
-              <div key={d} className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{d}</div>
-            ))}
-          </div>
-          <div className="grid grid-cols-7 gap-2 flex-1">
-            {calendarDays.map((day, idx) => {
-              if (!day) return <div key={`empty-${idx}`} className="p-2" />;
-              const isToday = day === today.getDate();
-              const hasLecture = scheduledDates.has(day);
-              
+        {/* Top Courses */}
+        <Card className="p-6 border border-border/50 shadow-sm">
+          <h3 className="font-bold text-foreground">Top Courses</h3>
+          <p className="text-sm text-muted-foreground">By enrollment</p>
+          <div className="mt-6 space-y-4">
+            {mockTopCourses.map((c) => {
+              const pct = (c.students / maxStudents) * 100
               return (
-                <div key={day} className="relative flex flex-col items-center justify-center p-2 rounded-xl transition-all hover:bg-muted/50 cursor-pointer group h-12">
-                  <span className={cn(
-                    "text-sm font-semibold z-10",
-                    isToday ? "text-white" : "text-foreground",
-                  )}>{day}</span>
-                  
-                  {isToday && (
-                    <div className="absolute inset-0 bg-primary rounded-xl shadow-md shadow-primary/20 -z-0"></div>
-                  )}
-                  
-                  {hasLecture && (
-                    <div className={cn(
-                      "absolute bottom-2 h-1.5 w-1.5 rounded-full z-10",
-                      isToday ? "bg-white" : "bg-warning shadow-[0_0_8px_rgba(var(--color-warning),0.8)]"
-                    )}></div>
-                  )}
-
-                  {hasLecture && (
-                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden w-max px-2.5 py-1 text-xs font-medium text-white bg-dark rounded-md shadow-xl group-hover:block z-50 animate-fade-in after:content-[''] after:absolute after:top-full after:left-1/2 after:-translate-x-1/2 after:border-4 after:border-transparent after:border-t-dark">
-                      Scheduled Lecture
+                <div key={c.id} className="flex items-center gap-4">
+                  <img src={c.thumbnail} alt={c.title} className="h-10 w-10 rounded-lg object-cover flex-shrink-0 border border-border/30" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-center mb-1.5 text-sm">
+                      <span className="font-medium text-foreground truncate mr-2">{c.title}</span>
+                      <span className="text-muted-foreground whitespace-nowrap text-xs font-semibold">{(c.students / 1000).toFixed(1)}k</span>
                     </div>
-                  )}
+                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                      <div
+                        className="h-full rounded-full bg-success transition-all duration-500"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                  </div>
                 </div>
               )
             })}
@@ -235,120 +130,84 @@ export default function ConsolePage() {
         </Card>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Lecturers Panel */}
-        <Card className="p-6">
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <h3 className="font-bold text-foreground">Lecturers</h3>
-              <p className="text-sm text-muted-foreground">Manage platform instructors</p>
-            </div>
-            <Badge color="primary" className="text-sm px-3 py-1">
-              Total: {totalLecturers}
-            </Badge>
-          </div>
+      {/* Course Content Builder */}
+      <Card className="p-6 border border-border/50 shadow-sm">
+        <h3 className="font-bold text-foreground">Course Content Builder</h3>
+        <p className="text-sm text-muted-foreground mb-6">
+          Upload resources directly to the first course (Artificial Intelligence & Deep Learning).
+        </p>
 
-          <div className="space-y-4">
-            {displayLecturers.map((lecturer) => (
-              <div key={lecturer.name} className="flex items-start gap-4 rounded-xl border border-border p-4">
-                <img src={lecturer.avatar} alt={lecturer.name} className="h-12 w-12 rounded-full object-cover ring-2 ring-primary/20" />
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-semibold text-foreground">{lecturer.name}</h4>
-                  <div className="mt-3 flex flex-col gap-2">
-                    {lecturer.schedule.map((item, i) => (
-                      <div key={i} className="flex flex-col rounded-md bg-muted/50 px-3 py-2 text-xs">
-                        <div className="flex justify-between items-center mb-1">
-                          <span className="font-semibold text-foreground truncate mr-2" title={item.lecture}>{item.lecture}</span>
-                          <span className="text-muted-foreground whitespace-nowrap font-medium">{item.time}</span>
-                        </div>
-                        <span className="text-primary truncate" title={item.subject}>{item.subject}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+        <div className="border-2 border-dashed border-border/70 rounded-xl p-8 flex flex-col items-center justify-center text-center bg-card hover:bg-muted/30 transition-colors">
+          <CloudUpload className="h-10 w-10 text-muted-foreground mb-3" />
+          <p className="font-semibold text-foreground">Drag & drop files here</p>
+          <p className="text-xs text-muted-foreground mb-4">MP4, PDF, DOCX, ZIP up to 500MB</p>
+          <Button variant="outline" className="text-sm font-medium shadow-sm border-border/80">Simulate File Upload</Button>
+        </div>
+
+        <div className="mt-4 flex items-center justify-between p-3 rounded-lg border border-border bg-muted/10 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="bg-primary/10 text-primary p-2 rounded-lg">
+              <FileVideo className="h-4 w-4" />
+            </div>
+            <span className="font-medium text-sm text-foreground">intro-lecture.mp4</span>
+            <Badge color="success" className="text-[10px] font-semibold bg-success/10"><CheckCircle2 className="h-3 w-3 mr-1 inline"/> Syncing with Firestore</Badge>
+          </div>
+        </div>
+      </Card>
+
+      {/* Quiz Question Builder */}
+      <Card className="p-6 border border-border/50 shadow-sm">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h3 className="font-bold text-foreground">Quiz Question Builder</h3>
+            <p className="text-sm text-muted-foreground">Create multiple-choice questions.</p>
+          </div>
+          <Button variant="primary" className="text-sm shadow-sm"><Plus className="h-4 w-4 mr-1"/> Add question</Button>
+        </div>
+
+        <div className="border border-border/70 rounded-xl p-6 bg-card shadow-sm space-y-4">
+          <div className="flex items-start gap-4">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold text-sm shrink-0">
+              1
+            </div>
+            <div className="flex-1 space-y-4 mt-0.5">
+              <input 
+                type="text"
+                placeholder="Enter your question..."
+                className="w-full rounded-lg border border-input bg-card px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary shadow-sm"
+              />
+              
+              <div className="flex items-center gap-3">
+                <CheckCircle2 className="h-5 w-5 text-success shrink-0" />
+                <input 
+                  type="text"
+                  placeholder="Answer option..."
+                  className="w-full rounded-lg border border-input bg-card px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary shadow-sm"
+                />
               </div>
-            ))}
-          </div>
-        </Card>
 
-
-        {/* Students Analytics Panel */}
-        <Card className="p-6">
-          <div className="mb-6 flex items-center justify-between">
-            <div>
-              <h3 className="font-bold text-foreground">Student Analytics</h3>
-              <p className="text-sm text-muted-foreground">Active vs On-hold & Top Subjects</p>
-            </div>
-            <Badge color="success" className="text-sm px-3 py-1">
-              Total: {totalStudents.toLocaleString()}
-            </Badge>
-          </div>
-
-          <div className="grid gap-6 md:grid-cols-2">
-            {/* Pie Chart Area */}
-            <div className="flex flex-col items-center justify-center space-y-4">
-              {(() => {
-                const activeCount = activeStudentsCount;
-                const onHoldCount = totalStudents - activeCount;
-                const activePct = totalStudents > 0 ? Math.round((activeCount / totalStudents) * 100) : 0;
-                
-                return (
-                  <>
-                    <div 
-                      className="relative h-32 w-32 rounded-full"
-                      style={{
-                        background: `conic-gradient(#10b981 ${activePct}%, rgba(148, 163, 184, 0.2) 0)`
-                      }}
-                    >
-                      <div className="absolute inset-2 flex items-center justify-center rounded-full bg-card">
-                        <div className="text-center">
-                          <div className="text-lg font-bold text-foreground">{activePct}%</div>
-                          <div className="text-[10px] text-muted-foreground uppercase">Active</div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="flex gap-4 text-xs font-medium">
-                      <div className="flex items-center gap-1.5">
-                        <span className="h-2.5 w-2.5 rounded-full bg-success"></span>
-                        <span className="text-foreground">Active ({activeCount.toLocaleString()})</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="h-2.5 w-2.5 rounded-full bg-muted"></span>
-                        <span className="text-foreground">On-Hold ({onHoldCount.toLocaleString()})</span>
-                      </div>
-                    </div>
-                  </>
-                )
-              })()}
-            </div>
-
-            {/* Top Subjects Area */}
-            <div className="space-y-4">
-              <h4 className="text-sm font-semibold text-foreground">Most Followed Subjects</h4>
-              <div className="space-y-3">
-                {[...courses].sort((a, b) => b.students - a.students).slice(0, 4).map(c => {
-                  const pct = ((c.students / Math.max(totalStudents, 1)) * 100).toFixed(1);
-                  return (
-                    <div key={c.id}>
-                      <div className="mb-1 flex justify-between text-xs">
-                        <span className="font-medium text-foreground truncate mr-2" title={c.title}>{c.title}</span>
-                        <span className="font-semibold text-success">{pct}%</span>
-                      </div>
-                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                        <div
-                          className="h-full rounded-full bg-success"
-                          style={{ width: `${pct}%` }}
-                        />
-                      </div>
-                    </div>
-                  )
-                })}
+              <div className="flex items-center gap-3">
+                <Circle className="h-5 w-5 text-muted-foreground shrink-0" />
+                <input 
+                  type="text"
+                  placeholder="Answer option..."
+                  className="w-full rounded-lg border border-input bg-card px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary shadow-sm"
+                />
               </div>
+
+              <button className="text-primary text-xs font-semibold flex items-center mt-3 hover:underline">
+                <Plus className="h-3 w-3 mr-1" /> Add option
+              </button>
             </div>
           </div>
-        </Card>
-      </div>
+        </div>
+
+        <div className="mt-6 flex justify-end">
+          <Button variant="success" className="font-semibold shadow-sm px-6">
+            <CheckCircle2 className="h-4 w-4 mr-2" /> Publish Quiz
+          </Button>
+        </div>
+      </Card>
     </div>
   )
 }
