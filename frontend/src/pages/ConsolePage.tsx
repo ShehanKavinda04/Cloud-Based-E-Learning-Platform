@@ -33,13 +33,12 @@ interface DraftQuestion {
 
 export default function ConsolePage() {
   const { courses, setCourses, setQuizzes } = useApp()
-  const [files, setFiles] = useState<{ name: string; type: "video" | "doc" }[]>([
-    { name: "intro-lecture.mp4", type: "video" },
-    { name: "syllabus.pdf", type: "doc" },
-  ])
   const [dragging, setDragging] = useState(false)
   const [publishing, setPublishing] = useState(false)
   const [publishSuccess, setPublishSuccess] = useState(false)
+
+  const sortedCourses = [...courses].sort((a, b) => b.students - a.students)
+  const selectedCourse = sortedCourses[0]
 
   const [questions, setQuestions] = useState<DraftQuestion[]>([
     {
@@ -79,8 +78,7 @@ export default function ConsolePage() {
 
   // Sync new uploaded assets into course resources
   const addResourceToDb = async (name: string, type: "video" | "doc") => {
-    if (courses.length === 0) return
-    const course = courses[0]
+    if (!selectedCourse) return
     const ext = name.split(".").pop() || ""
     const resourceType = ext === "zip" ? "zip" : ext === "pdf" ? "pdf" : "doc"
     
@@ -92,15 +90,29 @@ export default function ConsolePage() {
     }
 
     const updatedCourse = {
-      ...course,
-      resources: [...course.resources, newResource],
+      ...selectedCourse,
+      resources: [...(selectedCourse.resources || []), newResource],
     }
 
     try {
       await dbService.saveCourse(updatedCourse)
-      setCourses((prev) => prev.map((c) => (c.id === course.id ? updatedCourse : c)))
+      setCourses((prev) => prev.map((c) => (c.id === selectedCourse.id ? updatedCourse : c)))
     } catch (err) {
       console.error("Failed to save new resource in console:", err)
+    }
+  }
+
+  const removeResourceFromDb = async (resourceId: string) => {
+    if (!selectedCourse) return
+    const updatedCourse = {
+      ...selectedCourse,
+      resources: (selectedCourse.resources || []).filter(r => r.id !== resourceId),
+    }
+    try {
+      await dbService.saveCourse(updatedCourse)
+      setCourses((prev) => prev.map((c) => (c.id === selectedCourse.id ? updatedCourse : c)))
+    } catch (err) {
+      console.error("Failed to remove resource:", err)
     }
   }
 
@@ -109,20 +121,12 @@ export default function ConsolePage() {
     setDragging(false)
     const dropped = Array.from(e.dataTransfer.files)
     if (dropped.length) {
-      const newFiles = dropped.map((f) => ({
-        name: f.name,
-        type: f.type.startsWith("video") ? ("video" as const) : ("doc" as const),
-      }))
-      setFiles((prev) => [...prev, ...newFiles])
-      newFiles.forEach((file) => {
-        addResourceToDb(file.name, file.type)
+      dropped.forEach((f) => {
+        addResourceToDb(f.name, f.type.startsWith("video") ? "video" : "doc")
       })
     } else {
       // Simulate a dropped asset when no real file present
-      const name = `new-asset-${files.length + 1}.mp4`
-      const type = "video" as const
-      setFiles((prev) => [...prev, { name, type }])
-      addResourceToDb(name, type)
+      addResourceToDb(`new-asset-${Math.floor(Math.random() * 1000)}.mp4`, "video")
     }
   }
 
@@ -189,7 +193,7 @@ export default function ConsolePage() {
 
     setPublishing(true)
     try {
-      const course = courses[0] // Link to first course by default
+      const course = selectedCourse // Link to first course by default
       const formattedQuestions = questions.map((q) => {
         const correctOpt = q.options.find((o) => o.correct)
         return {
@@ -297,11 +301,11 @@ export default function ConsolePage() {
           <p className="text-sm text-muted-foreground">New students this week</p>
           <div className="mt-6 flex h-40 items-end justify-between gap-3">
             {dynamicWeekly.map((v, i) => (
-              <div key={DAYS[i]} className="flex flex-1 flex-col items-center gap-2">
-                <div className="flex w-full flex-1 items-end">
+              <div key={DAYS[i]} className="flex flex-1 flex-col items-center gap-2 h-full">
+                <div className="relative flex w-full flex-1 items-end h-full">
                   <div
                     className="w-full rounded-t-lg bg-primary/80 transition-all duration-500 hover:bg-primary"
-                    style={{ height: `${(v / Math.max(...dynamicWeekly)) * 100}%` }}
+                    style={{ height: `${(v / Math.max(...dynamicWeekly, 1)) * 100}%` }}
                     title={`${v} enrollments`}
                   />
                 </div>
@@ -344,7 +348,7 @@ export default function ConsolePage() {
       <Card className="p-6">
         <h3 className="font-bold text-foreground">Course Content Builder</h3>
         <p className="text-sm text-muted-foreground">
-          Upload resources directly to the first course ({courses[0]?.title || "N/A"}).
+          Upload resources directly to the first course ({selectedCourse?.title || "N/A"}).
         </p>
 
         <div
@@ -375,23 +379,23 @@ export default function ConsolePage() {
         </div>
 
         <div className="mt-4 space-y-2">
-          {files.map((f, i) => (
-            <div key={i} className="flex items-center justify-between rounded-xl border border-border p-3">
+          {(selectedCourse?.resources || []).map((f) => (
+            <div key={f.id} className="flex items-center justify-between rounded-xl border border-border p-3">
               <div className="flex items-center gap-3">
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
                   {f.type === "video" ? <FileVideo className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
                 </div>
                 <span className="text-sm font-medium text-foreground">{f.name}</span>
                 <Badge color="success">
-                  <CheckCircle2 className="h-3 w-3" /> Syncing with Firestore
+                  <CheckCircle2 className="h-3 w-3" /> Synced
                 </Badge>
               </div>
               <button
-                onClick={() => setFiles((prev) => prev.filter((_, idx) => idx !== i))}
+                onClick={() => removeResourceFromDb(f.id)}
                 className="text-muted-foreground transition-colors hover:text-danger"
                 aria-label="Remove file"
               >
-                <X className="h-4 w-4" />
+                <Trash2 className="h-4 w-4" />
               </button>
             </div>
           ))}
