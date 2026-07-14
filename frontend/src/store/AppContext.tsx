@@ -265,6 +265,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const app = courseApplications.find((a) => a.id === appId)
     if (!app) return
     
+    // Optimistic UI update - instantly remove from screen
+    setCourseApplications((prev) => prev.filter((a) => a.id !== appId))
+    
     // In a real app we'd enroll the specific student, but here we can just enroll the current user if they match
     // Actually we will simulate adding to progress for that student in the mock DB.
     try {
@@ -279,8 +282,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     } catch (err) {
       console.error(err)
     }
-
-    setCourseApplications((prev) => prev.filter((a) => a.id !== appId))
   }
 
   const rejectApplication = (appId: string) => {
