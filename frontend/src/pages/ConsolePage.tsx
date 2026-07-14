@@ -26,8 +26,50 @@ export default function ConsolePage() {
     return acc
   }, {} as Record<string, { name: string; avatar: string; courses: string[] }>)
 
-  const lecturers = Object.values(lecturersMap)
-  const totalLecturers = lecturers.length
+  const rawLecturers = Object.values(lecturersMap)
+
+  const sampleLecturers = [
+    {
+      name: "Dr. Sarah Jenkins",
+      avatar: "/avatars/instructor.png",
+      schedule: [
+        { lecture: "React Context API & Hooks", subject: "Advanced React", time: "Mon, 09:00 AM" },
+        { lecture: "Building Custom Hooks", subject: "Advanced React", time: "Wed, 11:00 AM" }
+      ]
+    },
+    {
+      name: "Prof. Michael Chen",
+      avatar: "/avatars/instructor.png",
+      schedule: [
+        { lecture: "Intro to Neural Networks", subject: "Data Science", time: "Tue, 10:00 AM" },
+        { lecture: "Model Deployment via Docker", subject: "Machine Learning", time: "Thu, 02:00 PM" }
+      ]
+    },
+    {
+      name: "Elena Rodriguez",
+      avatar: "/avatars/instructor.png",
+      schedule: [
+        { lecture: "AWS EC2 & S3 Basics", subject: "Cloud Computing", time: "Mon, 01:00 PM" },
+        { lecture: "Serverless Architecture", subject: "Cloud Computing", time: "Fri, 10:00 AM" }
+      ]
+    }
+  ];
+
+  const displayLecturers = rawLecturers.length > 0 ? rawLecturers.map(l => ({
+    name: l.name,
+    avatar: l.avatar,
+    schedule: l.courses.map((courseName, i) => {
+      const days = ["Mon", "Tue", "Wed", "Thu", "Fri"]
+      const times = ["09:00 AM", "11:00 AM", "01:00 PM", "03:00 PM"]
+      return {
+        lecture: `${courseName} - Chapter ${i + 1}`,
+        subject: courseName,
+        time: `${days[(l.name.length + i) % days.length]}, ${times[(courseName.length + i) % times.length]}`
+      }
+    })
+  })) : sampleLecturers;
+
+  const totalLecturers = displayLecturers.length
 
   const studentsMap = courses.reduce((acc, course) => {
     course.forum?.forEach(post => {
@@ -175,16 +217,20 @@ export default function ConsolePage() {
           </div>
 
           <div className="space-y-4">
-            {lecturers.map((lecturer) => (
+            {displayLecturers.map((lecturer) => (
               <div key={lecturer.name} className="flex items-start gap-4 rounded-xl border border-border p-4">
                 <img src={lecturer.avatar} alt={lecturer.name} className="h-12 w-12 rounded-full object-cover ring-2 ring-primary/20" />
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <h4 className="font-semibold text-foreground">{lecturer.name}</h4>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {lecturer.courses.map(courseName => (
-                      <Badge key={courseName} variant="secondary" className="text-xs">
-                        {courseName}
-                      </Badge>
+                  <div className="mt-3 flex flex-col gap-2">
+                    {lecturer.schedule.map((item, i) => (
+                      <div key={i} className="flex flex-col rounded-md bg-muted/50 px-3 py-2 text-xs">
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="font-semibold text-foreground truncate mr-2" title={item.lecture}>{item.lecture}</span>
+                          <span className="text-muted-foreground whitespace-nowrap font-medium">{item.time}</span>
+                        </div>
+                        <span className="text-primary truncate" title={item.subject}>{item.subject}</span>
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -193,34 +239,70 @@ export default function ConsolePage() {
           </div>
         </Card>
 
-        {/* Students Panel */}
+        {/* Students Analytics Panel */}
         <Card className="p-6">
-          <div className="mb-4 flex items-center justify-between">
+          <div className="mb-6 flex items-center justify-between">
             <div>
-              <h3 className="font-bold text-foreground">Active Students</h3>
-              <p className="text-sm text-muted-foreground">Recent course enrollments</p>
+              <h3 className="font-bold text-foreground">Student Analytics</h3>
+              <p className="text-sm text-muted-foreground">Active vs On-hold & Top Subjects</p>
             </div>
             <Badge color="success" className="text-sm px-3 py-1">
               Total: {totalStudents.toLocaleString()}
             </Badge>
           </div>
 
-          <div className="space-y-4">
-            {displayStudents.map((student) => (
-              <div key={student.name} className="flex items-start gap-4 rounded-xl border border-border p-4">
-                <img src={student.avatar} alt={student.name} className="h-12 w-12 rounded-full object-cover ring-2 ring-success/20" />
-                <div className="flex-1">
-                  <h4 className="font-semibold text-foreground">{student.name}</h4>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {student.courses.map(courseName => (
-                      <Badge key={courseName} color="success" variant="secondary" className="text-xs">
-                        {courseName}
-                      </Badge>
-                    ))}
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* Pie Chart Area */}
+            <div className="flex flex-col items-center justify-center space-y-4">
+              <div 
+                className="relative h-32 w-32 rounded-full"
+                style={{
+                  background: `conic-gradient(#10b981 85%, rgba(148, 163, 184, 0.2) 0)`
+                }}
+              >
+                <div className="absolute inset-2 flex items-center justify-center rounded-full bg-card">
+                  <div className="text-center">
+                    <div className="text-lg font-bold text-foreground">85%</div>
+                    <div className="text-[10px] text-muted-foreground uppercase">Active</div>
                   </div>
                 </div>
               </div>
-            ))}
+              
+              <div className="flex gap-4 text-xs font-medium">
+                <div className="flex items-center gap-1.5">
+                  <span className="h-2.5 w-2.5 rounded-full bg-success"></span>
+                  <span className="text-foreground">Active ({Math.round(totalStudents * 0.85).toLocaleString()})</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="h-2.5 w-2.5 rounded-full bg-muted"></span>
+                  <span className="text-foreground">On-Hold ({(totalStudents - Math.round(totalStudents * 0.85)).toLocaleString()})</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Top Subjects Area */}
+            <div className="space-y-4">
+              <h4 className="text-sm font-semibold text-foreground">Most Followed Subjects</h4>
+              <div className="space-y-3">
+                {[...courses].sort((a, b) => b.students - a.students).slice(0, 4).map(c => {
+                  const pct = ((c.students / Math.max(totalStudents, 1)) * 100).toFixed(1);
+                  return (
+                    <div key={c.id}>
+                      <div className="mb-1 flex justify-between text-xs">
+                        <span className="font-medium text-foreground truncate mr-2" title={c.title}>{c.title}</span>
+                        <span className="font-semibold text-success">{pct}%</span>
+                      </div>
+                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                        <div
+                          className="h-full rounded-full bg-success"
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
           </div>
         </Card>
       </div>
