@@ -57,31 +57,54 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [courses, setCourses] = useState<CourseDoc[]>([])
   const [quizzes, setQuizzes] = useState<QuizDoc[]>([])
   const [progress, setProgress] = useState<Record<string, string[]>>({})
-  const [notifications, setNotifications] = useState<Notification[]>(INITIAL_NOTIFICATIONS)
-  const [rejectedAdminCourses, setRejectedAdminCourses] = useState<string[]>([])
-  const [courseApplications, setCourseApplications] = useState<CourseApplication[]>([
-    {
-      id: "app1",
-      studentId: "student123",
-      studentName: "James Carter",
-      courseId: "c1",
-      courseTitle: "Advanced React & Frontend Architecture",
-      timestamp: "Yesterday"
-    },
-    {
-      id: "app2",
-      studentId: "student456",
-      studentName: "Sophia Lee",
-      courseId: "c2",
-      courseTitle: "Cloud Computing & DevOps Essentials",
-      timestamp: "2 days ago"
+  const [notifications, setNotifications] = useState<Notification[]>(() => {
+    try {
+      const saved = localStorage.getItem("nimbus_notifications")
+      return saved ? JSON.parse(saved) : INITIAL_NOTIFICATIONS
+    } catch {
+      return INITIAL_NOTIFICATIONS
     }
-  ])
+  })
+  const [rejectedAdminCourses, setRejectedAdminCourses] = useState<string[]>([])
+  const [courseApplications, setCourseApplications] = useState<CourseApplication[]>(() => {
+    try {
+      const saved = localStorage.getItem("nimbus_applications")
+      return saved ? JSON.parse(saved) : [
+        {
+          id: "app1",
+          studentId: "student123",
+          studentName: "James Carter",
+          courseId: "c1",
+          courseTitle: "Advanced React & Frontend Architecture",
+          timestamp: "Yesterday"
+        },
+        {
+          id: "app2",
+          studentId: "student456",
+          studentName: "Sophia Lee",
+          courseId: "c2",
+          courseTitle: "Cloud Computing & DevOps Essentials",
+          timestamp: "2 days ago"
+        }
+      ]
+    } catch {
+      return []
+    }
+  })
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     setRejectedAdminCourses(JSON.parse(localStorage.getItem("nimbus_rejected_courses") || "[]"))
   }, [])
+
+  // Sync to localStorage when these change
+  useEffect(() => {
+    localStorage.setItem("nimbus_applications", JSON.stringify(courseApplications))
+  }, [courseApplications])
+
+  useEffect(() => {
+    localStorage.setItem("nimbus_notifications", JSON.stringify(notifications))
+  }, [notifications])
 
   // Listen to Auth State Changes & Load User Data
   useEffect(() => {

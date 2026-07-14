@@ -1,17 +1,16 @@
 import { useState } from "react"
 import { Users, CheckCircle2, XCircle, Trash2, PauseCircle } from "lucide-react"
 import { Card, Badge, Button } from "@/components/ui/Primitives"
+import { useApp } from "@/store/AppContext"
 
 export default function StudentAboutPage() {
+  const { courseApplications, approveApplication, rejectApplication } = useApp()
+
   const [registrations, setRegistrations] = useState([
     { id: "reg1", name: "Alice Johnson", email: "alice.j@example.com", date: "2 mins ago" },
     { id: "reg2", name: "David Smith", email: "david.s@example.com", date: "1 hour ago" },
   ])
 
-  const [applications, setApplications] = useState([
-    { id: "app1", name: "James Carter", course: "Advanced React & Frontend Architecture", date: "Yesterday" },
-    { id: "app2", name: "Sophia Lee", course: "Cloud Computing & DevOps Essentials", date: "2 days ago" },
-  ])
 
   const [students, setStudents] = useState([
     { id: "stu1", name: "Marcus Lee", status: "Active", courses: 2, avatar: "/avatars/student.png" },
@@ -31,13 +30,6 @@ export default function StudentAboutPage() {
     setRegistrations(registrations.filter((r) => r.id !== id))
   }
 
-  function handleAcceptApplication(id: string) {
-    setApplications(applications.filter((a) => a.id !== id))
-  }
-
-  function handleRejectApplication(id: string) {
-    setApplications(applications.filter((a) => a.id !== id))
-  }
 
   function toggleStudentStatus(id: string) {
     setStudents(students.map(s => s.id === id ? { ...s, status: s.status === "Active" ? "On Hold" : "Active" } : s))
@@ -64,7 +56,7 @@ export default function StudentAboutPage() {
             <p className="text-sm text-muted-foreground">Pending registrations and course applications.</p>
           </div>
           <Badge color="warning" className="text-sm px-3 py-1">
-            Pending: {registrations.length + applications.length}
+            Pending: {registrations.length + courseApplications.length}
           </Badge>
         </div>
 
@@ -100,23 +92,23 @@ export default function StudentAboutPage() {
           {/* Course Applications */}
           <div className="space-y-4">
             <h4 className="text-sm font-semibold text-foreground border-b border-border pb-2">Course Applications</h4>
-            {applications.length === 0 ? (
+            {courseApplications.length === 0 ? (
               <p className="text-sm text-muted-foreground italic">No pending applications.</p>
             ) : (
-              applications.map(app => (
-                <div key={app.id} className="flex flex-col gap-3 rounded-xl border border-border p-4 bg-muted/30">
+              courseApplications.map(app => (
+                <div key={app.id} className="flex flex-col gap-3 rounded-xl border border-border p-4 bg-muted/30 transition-all hover:border-primary/30 hover:shadow-sm">
                   <div className="flex justify-between items-start">
                     <div>
-                      <h5 className="font-medium text-sm text-foreground">{app.name}</h5>
-                      <p className="text-xs text-primary font-medium mt-0.5 line-clamp-1" title={app.course}>{app.course}</p>
+                      <h5 className="font-medium text-sm text-foreground">{app.studentName}</h5>
+                      <p className="text-xs text-primary font-medium mt-0.5 line-clamp-1" title={app.courseTitle}>{app.courseTitle}</p>
                     </div>
-                    <span className="text-[10px] text-muted-foreground whitespace-nowrap ml-2">{app.date}</span>
+                    <span className="text-[10px] text-muted-foreground whitespace-nowrap ml-2">{app.timestamp}</span>
                   </div>
                   <div className="flex gap-2">
-                    <Button size="sm" variant="success" className="w-full text-xs" onClick={() => handleAcceptApplication(app.id)}>
+                    <Button size="sm" variant="success" className="w-full text-xs" onClick={() => approveApplication(app.id)}>
                       <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Approve
                     </Button>
-                    <Button size="sm" variant="outline" className="w-full text-xs text-danger hover:bg-danger/10 hover:text-danger" onClick={() => handleRejectApplication(app.id)}>
+                    <Button size="sm" variant="outline" className="w-full text-xs text-danger hover:bg-danger/10 hover:text-danger" onClick={() => rejectApplication(app.id)}>
                       <XCircle className="h-3.5 w-3.5 mr-1" /> Reject
                     </Button>
                   </div>
