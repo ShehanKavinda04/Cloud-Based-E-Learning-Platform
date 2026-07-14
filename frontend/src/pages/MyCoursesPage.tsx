@@ -124,10 +124,13 @@ const MOCK_ADMIN_COURSES = [
 ]
 
 function StudentCoursesView() {
-  const { courses } = useApp()
+  const { courses, progress } = useApp()
   const [filter, setFilter] = useState("All")
+  
+  const enrolledCourses = courses.filter((c) => progress[c.id] !== undefined)
+  
   const filtered =
-    filter === "All" ? courses : courses.filter((c) => c.category === filter)
+    filter === "All" ? enrolledCourses : enrolledCourses.filter((c) => c.category === filter)
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 animate-fade-in">
@@ -155,11 +158,18 @@ function StudentCoursesView() {
         ))}
       </div>
 
-      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-        {filtered.map((course) => (
-          <CourseCard key={course.id} course={course} />
-        ))}
-      </div>
+      {filtered.length === 0 ? (
+        <div className="flex h-40 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border bg-card/50">
+          <p className="text-muted-foreground">You haven't enrolled in any courses yet.</p>
+          <Button onClick={() => window.location.href = "/apply-courses"}>Explore Courses</Button>
+        </div>
+      ) : (
+        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+          {filtered.map((course) => (
+            <CourseCard key={course.id} course={course} />
+          ))}
+        </div>
+      )}
     </div>
   )
 }

@@ -12,6 +12,7 @@ import ConsolePage from "./pages/ConsolePage"
 import AdminCourseReviewPage from "./pages/AdminCourseReviewPage"
 import StudentAboutPage from "./pages/StudentAboutPage"
 import LecturesAboutPage from "./pages/LecturesAboutPage"
+import ApplyCoursesPage from "./pages/ApplyCoursesPage"
 import type { ReactNode } from "react"
 
 function RequireAuth({ children }: { children: ReactNode }) {
@@ -57,6 +58,7 @@ export default function App() {
         }
       >
         <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/apply-courses" element={<ApplyCoursesPage />} />
         <Route path="/courses" element={<MyCoursesPage />} />
         <Route path="/courses/:courseId" element={<CoursePlayerPage />} />
         <Route path="/quizzes" element={<QuizPage listMode />} />

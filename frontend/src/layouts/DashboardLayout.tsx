@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils"
 
 const STUDENT_NAV = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/apply-courses", label: "Apply Courses", icon: Search },
   { to: "/courses", label: "My Courses", icon: BookOpen },
   { to: "/quizzes", label: "Quizzes", icon: FileQuestion },
   { to: "/certificates", label: "Certificates", icon: Award },

@@ -24,6 +24,7 @@ interface AppState {
   quizzes: QuizDoc[]
   setQuizzes: React.Dispatch<React.SetStateAction<QuizDoc[]>>
   progress: Record<string, string[]>
+  enrollCourse: (courseId: string) => Promise<void>
   toggleLesson: (courseId: string, lessonId: string) => Promise<void>
   courseProgressPct: (courseId: string) => number
   overallProgressPct: () => number
@@ -87,6 +88,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  const enrollCourse = async (courseId: string) => {
+    if (!user) return
+    // Only enroll if not already enrolled
+    if (progress[courseId] === undefined) {
+      setProgress((prev) => ({ ...prev, [courseId]: [] }))
+      try {
+        await dbService.saveProgress(user.uid, courseId, [])
+      } catch (err) {
+        console.error("Failed to sync enrollment to database:", err)
+      }
+    }
+  }
+
   const toggleLesson = async (courseId: string, lessonId: string) => {
     if (!user) return
     const current = progress[courseId] ?? []
@@ -132,6 +146,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       quizzes,
       setQuizzes,
       progress,
+      enrollCourse,
       toggleLesson,
       courseProgressPct,
       overallProgressPct,
