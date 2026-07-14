@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils"
 import { Search, GraduationCap, CheckCircle2, ArrowRight } from "lucide-react"
 import { Button, Badge, Card } from "@/components/ui/Primitives"
 
-const STUDENT_CATEGORIES = ["All", "Web Development", "Data Science", "Design", "Cloud"]
+const STUDENT_CATEGORIES = ["All", "Programming", "Computer Science", "Hackathons"]
 
 export default function ApplyCoursesPage() {
   const { courses, progress, enrollCourse } = useApp()

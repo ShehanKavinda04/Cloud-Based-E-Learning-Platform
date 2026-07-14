@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils"
 import { CheckCircle2, XCircle, PlaySquare, FileText, FileQuestion, Award, X } from "lucide-react"
 import { Button, Badge } from "@/components/ui/Primitives"
 
-const STUDENT_CATEGORIES = ["All", "Web Development", "Data Science", "Design", "Cloud"]
+const STUDENT_CATEGORIES = ["All", "Programming", "Computer Science", "Hackathons"]
 const ADMIN_CATEGORIES = ["All", "Programming", "Computer Science", "Hackathons"]
 
 const MOCK_ADMIN_COURSES = [
