@@ -175,21 +175,26 @@ function StudentCoursesView() {
 }
 
 function AdminCoursesView() {
+  const { courses, publishAdminCourse, rejectAdminCourse, rejectedAdminCourses } = useApp()
   const [filter, setFilter] = useState("All")
-  const [pendingCourses, setPendingCourses] = useState(MOCK_ADMIN_COURSES)
   const [selectedCourse, setSelectedCourse] = useState<any>(null)
   const navigate = useNavigate()
+
+  const pendingCourses = MOCK_ADMIN_COURSES.filter(
+    (c) => !courses.some((pc) => pc.id === c.id) && !rejectedAdminCourses.includes(c.id)
+  )
 
   const filtered =
     filter === "All" ? pendingCourses : pendingCourses.filter((c) => c.category === filter)
 
-  const handlePublish = (id: string) => {
-    setPendingCourses(pendingCourses.filter(c => c.id !== id))
+  const handlePublish = async (id: string) => {
+    const course = pendingCourses.find(c => c.id === id)
+    if (course) await publishAdminCourse(course)
     setSelectedCourse(null)
   }
 
   const handleReject = (id: string) => {
-    setPendingCourses(pendingCourses.filter(c => c.id !== id))
+    rejectAdminCourse(id)
     setSelectedCourse(null)
   }
 

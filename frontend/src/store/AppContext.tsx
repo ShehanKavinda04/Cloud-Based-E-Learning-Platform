@@ -30,6 +30,9 @@ interface AppState {
   overallProgressPct: () => number
   notifications: Notification[]
   markAllRead: () => void
+  publishAdminCourse: (adminCourse: any) => Promise<void>
+  rejectAdminCourse: (courseId: string) => void
+  rejectedAdminCourses: string[]
   loading: boolean
 }
 
@@ -41,7 +44,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [quizzes, setQuizzes] = useState<QuizDoc[]>([])
   const [progress, setProgress] = useState<Record<string, string[]>>({})
   const [notifications, setNotifications] = useState<Notification[]>(INITIAL_NOTIFICATIONS)
+  const [rejectedAdminCourses, setRejectedAdminCourses] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    setRejectedAdminCourses(JSON.parse(localStorage.getItem("nimbus_rejected_courses") || "[]"))
+  }, [])
 
   // Listen to Auth State Changes & Load User Data
   useEffect(() => {
@@ -137,6 +145,38 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setNotifications((prev) => prev.map((n) => ({ ...n, unread: false })))
   }
 
+  const publishAdminCourse = async (adminCourse: any) => {
+    const newCourse: CourseDoc = {
+      id: adminCourse.id,
+      title: adminCourse.title,
+      instructor: adminCourse.instructor,
+      instructorAvatar: "/avatars/instructor.png",
+      category: adminCourse.category,
+      thumbnail: adminCourse.image,
+      description: `Master ${adminCourse.title} and earn your ${adminCourse.certificate}.`,
+      rating: 5.0,
+      students: 0,
+      totalLessons: adminCourse.videos + adminCourse.quizzes + adminCourse.papers,
+      level: "Intermediate",
+      modules: adminCourse.curriculum.map((c: string, i: number) => ({
+        id: `m${i}`,
+        title: c,
+        lessons: [
+           { id: `l${i}_1`, title: `${c} Introduction`, duration: "10:00", type: "video", videoUrl: "big-buck" }
+        ]
+      })),
+      resources: [],
+      forum: []
+    }
+    await dbService.saveCourse(newCourse)
+  }
+
+  const rejectAdminCourse = (courseId: string) => {
+    const next = [...rejectedAdminCourses, courseId]
+    setRejectedAdminCourses(next)
+    localStorage.setItem("nimbus_rejected_courses", JSON.stringify(next))
+  }
+
   const value = useMemo<AppState>(
     () => ({
       user,
@@ -152,9 +192,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       overallProgressPct,
       notifications,
       markAllRead,
+      publishAdminCourse,
+      rejectAdminCourse,
+      rejectedAdminCourses,
       loading,
     }),
-    [user, courses, quizzes, progress, notifications, loading],
+    [user, courses, quizzes, progress, notifications, rejectedAdminCourses, loading],
   )
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>

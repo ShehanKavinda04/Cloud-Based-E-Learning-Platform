@@ -1,5 +1,5 @@
-import { useState } from "react"
 import { useLocation, useNavigate, Navigate } from "react-router-dom"
+import { useApp } from "@/store/AppContext"
 import { 
   PlaySquare, FileQuestion, FileText, Award, CheckCircle2, XCircle, 
   ChevronLeft, Play, Download, Lock
@@ -10,18 +10,20 @@ export default function AdminCourseReviewPage() {
   const location = useLocation()
   const navigate = useNavigate()
   const course = location.state?.course
+  const { publishAdminCourse, rejectAdminCourse } = useApp()
   const [activeTab, setActiveTab] = useState("videos")
 
   if (!course) {
     return <Navigate to="/courses" replace />
   }
 
-  const handleApprove = () => {
-    // In a real app, this updates backend and navigates back
+  const handleApprove = async () => {
+    await publishAdminCourse(course)
     navigate("/courses")
   }
 
   const handleReject = () => {
+    rejectAdminCourse(course.id)
     navigate("/courses")
   }
 
