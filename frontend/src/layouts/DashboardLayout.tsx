@@ -13,6 +13,8 @@ import {
   LineChart,
   Menu,
   X,
+  Users,
+  GraduationCap
 } from "lucide-react"
 import { useApp } from "@/store/AppContext"
 import { signOut } from "@/services/authService"
@@ -29,6 +31,8 @@ const STUDENT_NAV = [
 const STAFF_NAV = [
   { to: "/console", label: "Console", icon: LineChart },
   { to: "/courses", label: "Courses", icon: BookOpen },
+  { to: "/student-about", label: "Student About", icon: Users },
+  { to: "/lectures-about", label: "Lectures About", icon: GraduationCap },
   { to: "/profile", label: "Profile", icon: UserIcon },
 ]
 

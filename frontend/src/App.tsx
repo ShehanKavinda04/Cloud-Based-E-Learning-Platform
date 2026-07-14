@@ -9,6 +9,8 @@ import QuizPage from "./pages/QuizPage"
 import CertificatesPage from "./pages/CertificatesPage"
 import ProfilePage from "./pages/ProfilePage"
 import ConsolePage from "./pages/ConsolePage"
+import StudentAboutPage from "./pages/StudentAboutPage"
+import LecturesAboutPage from "./pages/LecturesAboutPage"
 import type { ReactNode } from "react"
 
 function RequireAuth({ children }: { children: ReactNode }) {
@@ -60,6 +62,8 @@ export default function App() {
         <Route path="/certificates" element={<CertificatesPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/console" element={<ConsolePage />} />
+        <Route path="/student-about" element={<StudentAboutPage />} />
+        <Route path="/lectures-about" element={<LecturesAboutPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />
