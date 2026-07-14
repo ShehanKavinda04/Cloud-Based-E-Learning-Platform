@@ -29,46 +29,21 @@ export default function ConsolePage() {
 
   const rawLecturers = Object.values(lecturersMap)
 
-  const sampleLecturers = [
-    {
-      name: "Dr. Sarah Jenkins",
-      avatar: "/avatars/instructor.png",
-      schedule: [
-        { lecture: "React Context API & Hooks", subject: "Advanced React", time: "Mon, 09:00 AM" },
-        { lecture: "Building Custom Hooks", subject: "Advanced React", time: "Wed, 11:00 AM" }
-      ]
-    },
-    {
-      name: "Prof. Michael Chen",
-      avatar: "/avatars/instructor.png",
-      schedule: [
-        { lecture: "Intro to Neural Networks", subject: "Data Science", time: "Tue, 10:00 AM" },
-        { lecture: "Model Deployment via Docker", subject: "Machine Learning", time: "Thu, 02:00 PM" }
-      ]
-    },
-    {
-      name: "Elena Rodriguez",
-      avatar: "/avatars/instructor.png",
-      schedule: [
-        { lecture: "AWS EC2 & S3 Basics", subject: "Cloud Computing", time: "Mon, 01:00 PM" },
-        { lecture: "Serverless Architecture", subject: "Cloud Computing", time: "Fri, 10:00 AM" }
-      ]
-    }
-  ];
-
-  const displayLecturers = rawLecturers.length > 0 ? rawLecturers.map(l => ({
+  const displayLecturers = rawLecturers.map(l => ({
     name: l.name,
     avatar: l.avatar,
     schedule: l.courses.map((courseName, i) => {
       const days = ["Mon", "Tue", "Wed", "Thu", "Fri"]
       const times = ["09:00 AM", "11:00 AM", "01:00 PM", "03:00 PM"]
+      const dayStr = days[(l.name.length + i) % days.length]
       return {
         lecture: `${courseName} - Chapter ${i + 1}`,
         subject: courseName,
-        time: `${days[(l.name.length + i) % days.length]}, ${times[(courseName.length + i) % times.length]}`
+        dayStr: dayStr,
+        time: `${dayStr}, ${times[(courseName.length + i) % times.length]}`
       }
     })
-  })) : sampleLecturers;
+  }))
 
   const totalLecturers = displayLecturers.length
 
@@ -85,19 +60,16 @@ export default function ConsolePage() {
   }, {} as Record<string, { name: string; avatar: string; courses: string[] }>)
 
   const activeStudents = Object.values(studentsMap)
-  const displayStudents = activeStudents.length > 0 ? activeStudents : [
-    { name: "Marcus Lee", avatar: "/avatars/student.png", courses: ["Advanced React & Frontend Architecture", "UI/UX Design Fundamentals"] },
-    { name: "Jessica Smith", avatar: "/avatars/student.png", courses: ["Data Science & Machine Learning Bootcamp"] },
-    { name: "Raj Patel", avatar: "/avatars/student.png", courses: ["Cloud Computing & DevOps Essentials"] },
-    { name: "Emma Wilson", avatar: "/avatars/student.png", courses: ["Mobile App Development with Flutter"] },
-  ]
+  const activeStudentsCount = activeStudents.length
 
   // --- Dynamic Data Calculations ---
-  const totalStudents = courses.reduce((acc, c) => acc + c.students, 0)
+  const dbTotalStudents = courses.reduce((acc, c) => acc + c.students, 0)
+  const totalStudents = Math.max(dbTotalStudents, activeStudentsCount) // Ensure it's never less than active forum users
+  
   const avgRating = courses.length > 0 
     ? (courses.reduce((acc, c) => acc + c.rating, 0) / courses.length).toFixed(1) 
     : "0.0"
-  const activeHours = Math.round(totalStudents * 5.8) // Derived active hours estimate
+  const activeHours = Math.round(activeStudentsCount * 5.8) // Derived accurately from active users
 
   // Dynamic Deltas based on real data
   const maxRating = courses.length > 0 ? Math.max(...courses.map((c) => c.rating)) : 0
@@ -111,8 +83,8 @@ export default function ConsolePage() {
     { label: "Avg. Course Rating", value: avgRating, delta: ratingDelta, icon: Star, color: "text-warning bg-warning/10" },
   ]
 
-  const weeklyTotal = Math.max(Math.round(totalStudents * 0.02), 100) // 2% of total
-  const dynamicWeekly = [
+  const weeklyTotal = totalStudents > 0 ? Math.round(totalStudents * 0.02) : 0;
+  const dynamicWeekly = weeklyTotal > 0 ? [
     Math.round(weeklyTotal * 0.1),
     Math.round(weeklyTotal * 0.15),
     Math.round(weeklyTotal * 0.08),
@@ -120,7 +92,7 @@ export default function ConsolePage() {
     Math.round(weeklyTotal * 0.12),
     Math.round(weeklyTotal * 0.25),
     Math.round(weeklyTotal * 0.1),
-  ]
+  ] : [0, 0, 0, 0, 0, 0, 0]
   const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
   // Dynamic Calendar Logic
@@ -139,8 +111,23 @@ export default function ConsolePage() {
     calendarDays.push(i);
   }
 
-  // Generate random schedule dates for visual mockup
-  const scheduledDates = [3, 7, 12, 14, 18, 22, 25, 29];
+  // Derive schedule dates dynamically from real lecturers schedules
+  const scheduledDates = new Set<number>();
+  const dayNameToIndex: Record<string, number> = { "Sun": 0, "Mon": 1, "Tue": 2, "Wed": 3, "Thu": 4, "Fri": 5, "Sat": 6 };
+  
+  displayLecturers.forEach(l => {
+    l.schedule.forEach(s => {
+      const targetDayOfWeek = dayNameToIndex[s.dayStr];
+      if (targetDayOfWeek !== undefined) {
+        for (let d = 1; d <= daysInMonth; d++) {
+          const dateObj = new Date(currentYear, currentMonth, d);
+          if (dateObj.getDay() === targetDayOfWeek) {
+            scheduledDates.add(d);
+          }
+        }
+      }
+    });
+  });
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 animate-fade-in">
@@ -216,7 +203,7 @@ export default function ConsolePage() {
             {calendarDays.map((day, idx) => {
               if (!day) return <div key={`empty-${idx}`} className="p-2" />;
               const isToday = day === today.getDate();
-              const hasLecture = scheduledDates.includes(day);
+              const hasLecture = scheduledDates.has(day);
               
               return (
                 <div key={day} className="relative flex flex-col items-center justify-center p-2 rounded-xl transition-all hover:bg-muted/50 cursor-pointer group h-12">
@@ -299,30 +286,40 @@ export default function ConsolePage() {
           <div className="grid gap-6 md:grid-cols-2">
             {/* Pie Chart Area */}
             <div className="flex flex-col items-center justify-center space-y-4">
-              <div 
-                className="relative h-32 w-32 rounded-full"
-                style={{
-                  background: `conic-gradient(#10b981 85%, rgba(148, 163, 184, 0.2) 0)`
-                }}
-              >
-                <div className="absolute inset-2 flex items-center justify-center rounded-full bg-card">
-                  <div className="text-center">
-                    <div className="text-lg font-bold text-foreground">85%</div>
-                    <div className="text-[10px] text-muted-foreground uppercase">Active</div>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="flex gap-4 text-xs font-medium">
-                <div className="flex items-center gap-1.5">
-                  <span className="h-2.5 w-2.5 rounded-full bg-success"></span>
-                  <span className="text-foreground">Active ({Math.round(totalStudents * 0.85).toLocaleString()})</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="h-2.5 w-2.5 rounded-full bg-muted"></span>
-                  <span className="text-foreground">On-Hold ({(totalStudents - Math.round(totalStudents * 0.85)).toLocaleString()})</span>
-                </div>
-              </div>
+              {(() => {
+                const activeCount = activeStudentsCount;
+                const onHoldCount = totalStudents - activeCount;
+                const activePct = totalStudents > 0 ? Math.round((activeCount / totalStudents) * 100) : 0;
+                
+                return (
+                  <>
+                    <div 
+                      className="relative h-32 w-32 rounded-full"
+                      style={{
+                        background: `conic-gradient(#10b981 ${activePct}%, rgba(148, 163, 184, 0.2) 0)`
+                      }}
+                    >
+                      <div className="absolute inset-2 flex items-center justify-center rounded-full bg-card">
+                        <div className="text-center">
+                          <div className="text-lg font-bold text-foreground">{activePct}%</div>
+                          <div className="text-[10px] text-muted-foreground uppercase">Active</div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex gap-4 text-xs font-medium">
+                      <div className="flex items-center gap-1.5">
+                        <span className="h-2.5 w-2.5 rounded-full bg-success"></span>
+                        <span className="text-foreground">Active ({activeCount.toLocaleString()})</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="h-2.5 w-2.5 rounded-full bg-muted"></span>
+                        <span className="text-foreground">On-Hold ({onHoldCount.toLocaleString()})</span>
+                      </div>
+                    </div>
+                  </>
+                )
+              })()}
             </div>
 
             {/* Top Subjects Area */}
