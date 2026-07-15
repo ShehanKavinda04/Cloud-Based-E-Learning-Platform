@@ -224,23 +224,40 @@ export default function ConsolePage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Enrollment chart */}
-        <Card className="p-6 border border-border/50 shadow-sm flex flex-col">
-          <h3 className="font-bold text-foreground">Weekly Enrollments</h3>
-          <p className="text-sm text-muted-foreground">New students this week</p>
-          <div className="mt-6 flex flex-1 items-end justify-between gap-3 min-h-[160px]">
-            {dynamicWeekly.map((v, i) => (
-              <div key={DAYS[i]} className="flex flex-1 flex-col items-center gap-2 h-full">
-                <div className="relative flex w-full flex-1 items-end h-full">
-                  <div
-                    className="w-full rounded-t-lg bg-primary/80 transition-all duration-500 hover:bg-primary"
-                    style={{ height: `${(v / Math.max(...dynamicWeekly, 1)) * 100}%` }}
-                    title={`${v} enrollments`}
-                  />
+        {/* Lecturer's Courses List (Replacing Weekly Enrollments) */}
+        <Card className="p-6 border border-border/50 shadow-sm flex flex-col h-full overflow-hidden min-h-[300px]">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="font-bold text-foreground">{user?.role === "admin" ? "All Courses" : "My Courses Overview"}</h3>
+              <p className="text-sm text-muted-foreground">Course enrollment details</p>
+            </div>
+            <Badge className="bg-primary/10 text-primary font-bold border-0">
+              Total: {instructorCourses.length}
+            </Badge>
+          </div>
+          
+          <div className="flex-1 overflow-y-auto pr-2 space-y-3">
+            {instructorCourses.map((c) => (
+              <div key={c.id} className="flex items-center gap-4 rounded-xl border border-border/40 bg-background/50 p-3 shadow-sm hover:border-primary/50 hover:bg-card transition-colors group">
+                <img src={c.thumbnail} alt={c.title} className="h-12 w-12 shrink-0 rounded-lg object-cover border border-border/50" />
+                <div className="flex-1 min-w-0">
+                  <h4 className="truncate text-sm font-bold text-foreground group-hover:text-primary transition-colors">{c.title}</h4>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-[10px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">ID: {c.id}</span>
+                  </div>
                 </div>
-                <span className="text-xs text-muted-foreground">{DAYS[i]}</span>
+                <div className="shrink-0 text-right">
+                  <div className="text-lg font-bold text-foreground">{c.students.toLocaleString()}</div>
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Students</div>
+                </div>
               </div>
             ))}
+            {instructorCourses.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground">
+                <BookOpen className="h-8 w-8 mb-2 opacity-20" />
+                <p className="text-sm font-medium">No courses found</p>
+              </div>
+            )}
           </div>
         </Card>
 
