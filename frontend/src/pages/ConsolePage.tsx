@@ -115,6 +115,23 @@ export default function ConsolePage() {
     }
   });
 
+  // Admin Panels Data
+  const uniqueLecturers = Array.from(new Set(courses.map(c => c.instructor).filter(Boolean)));
+  const totalLecturerCount = uniqueLecturers.length;
+  const lecturersList = uniqueLecturers.map((name, idx) => ({
+    id: `lec-profile-${idx}`,
+    name,
+    courses: courses.filter(c => c.instructor === name).map(c => c.title).join(", "),
+    avatar: `https://api.dicebear.com/7.x/notionists/svg?seed=${name.replace(/\s/g, '')}`
+  }));
+
+  const studentsList = [
+    { id: 1, name: "Emma Watson", course: courses[0]?.title || "Cybersecurity", avatar: "https://api.dicebear.com/7.x/notionists/svg?seed=Emma" },
+    { id: 2, name: "Michael Chang", course: courses[1]?.title || "AI & Deep Learning", avatar: "https://api.dicebear.com/7.x/notionists/svg?seed=Michael" },
+    { id: 3, name: "Sophia Martinez", course: courses[2]?.title || "Data Science", avatar: "https://api.dicebear.com/7.x/notionists/svg?seed=Sophia" },
+    { id: 4, name: "James Wilson", course: courses[3]?.title || "React Architecture", avatar: "https://api.dicebear.com/7.x/notionists/svg?seed=James" },
+  ];
+
   return (
     <div className="mx-auto max-w-6xl space-y-6 animate-fade-in">
       <div>
@@ -171,34 +188,57 @@ export default function ConsolePage() {
           </div>
         </Card>
 
-        {/* My Courses & Calendar */}
+        {/* Admin Panels OR Instructor My Courses */}
         {user?.role === "admin" ? (
-          <Card className="p-6 border border-border/50 shadow-sm flex flex-col">
-            <h3 className="font-bold text-foreground">Top Courses</h3>
-            <p className="text-sm text-muted-foreground">By enrollment</p>
-            <div className="mt-6 space-y-4">
-              {topCourses.map((c) => {
-                const pct = totalStudents > 0 ? (c.students / totalStudents) * 100 : 0
-                return (
-                  <div key={c.id} className="flex items-center gap-4">
-                    <img src={c.thumbnail} alt={c.title} className="h-10 w-10 rounded-lg object-cover flex-shrink-0 border border-border/30" />
+          <div className="space-y-6">
+            {/* Lecturers Panel */}
+            <Card className="p-6 border border-border/50 shadow-sm">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="font-bold text-foreground">Lecturers</h3>
+                  <p className="text-sm text-muted-foreground">Active instructors</p>
+                </div>
+                <Badge color="primary" className="bg-primary/10 text-primary font-bold border-0">
+                  Total: {totalLecturerCount}
+                </Badge>
+              </div>
+              <div className="space-y-3">
+                {lecturersList.map(lec => (
+                  <div key={lec.id} className="flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-card hover:border-primary/50 transition-colors shadow-sm cursor-pointer group">
+                    <img src={lec.avatar} alt={lec.name} className="h-10 w-10 rounded-full object-cover border border-border group-hover:border-primary/50 transition-colors bg-muted/50" />
                     <div className="flex-1 min-w-0">
-                      <div className="flex justify-between items-center mb-1.5 text-sm">
-                        <span className="font-medium text-foreground truncate mr-2">{c.title}</span>
-                        <span className="text-muted-foreground whitespace-nowrap text-xs font-semibold">{pct.toFixed(1)}%</span>
-                      </div>
-                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                        <div
-                          className="h-full rounded-full bg-success transition-all duration-500"
-                          style={{ width: `${pct}%` }}
-                        />
-                      </div>
+                      <p className="text-sm font-bold text-foreground truncate group-hover:text-primary transition-colors">{lec.name}</p>
+                      <p className="text-[11px] font-medium text-muted-foreground truncate">{lec.courses}</p>
                     </div>
                   </div>
-                )
-              })}
-            </div>
-          </Card>
+                ))}
+              </div>
+            </Card>
+
+            {/* Students Panel */}
+            <Card className="p-6 border border-border/50 shadow-sm">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="font-bold text-foreground">Recent Students</h3>
+                  <p className="text-sm text-muted-foreground">Newly enrolled</p>
+                </div>
+                <Badge color="success" className="bg-success/10 text-success font-bold border-0">
+                  Total: {totalStudents.toLocaleString()}
+                </Badge>
+              </div>
+              <div className="space-y-3">
+                {studentsList.map(student => (
+                  <div key={student.id} className="flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-card hover:border-success/50 transition-colors shadow-sm cursor-pointer group">
+                    <img src={student.avatar} alt={student.name} className="h-10 w-10 rounded-full object-cover border border-border group-hover:border-success/50 transition-colors bg-muted/50" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-foreground truncate group-hover:text-success transition-colors">{student.name}</p>
+                      <p className="text-[11px] font-medium text-muted-foreground truncate">{student.course}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
         ) : (
           <Card className="p-6 border border-border/50 shadow-sm flex flex-col justify-between">
             <div>
