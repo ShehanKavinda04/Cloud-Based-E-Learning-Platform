@@ -47,6 +47,23 @@ export default function AuthPage() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     setError(null)
+    
+    // Role-based email validation
+    const emailParts = email.split("@")
+    if (emailParts.length === 2) {
+      const domain = emailParts[1].toLowerCase()
+      
+      if (role === "instructor" && !domain.startsWith("lec")) {
+        setError("Instructor emails must contain 'lec' immediately after the '@' symbol.")
+        return
+      }
+      
+      if (role === "admin" && !domain.startsWith("adm")) {
+        setError("Admin emails must contain 'adm' immediately after the '@' symbol.")
+        return
+      }
+    }
+
     setLoading(true)
     try {
       const user =
