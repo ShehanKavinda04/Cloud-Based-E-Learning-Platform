@@ -80,7 +80,7 @@ export default function ConsolePage() {
   ] : [0, 0, 0, 0, 0, 0, 0]
   const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
-  const topCourses = [...instructorCourses].sort((a, b) => b.students - a.students).slice(0, 2)
+  const topCourses = [...instructorCourses].sort((a, b) => b.students - a.students).slice(0, user?.role === "admin" ? 4 : 2)
 
   // Dynamic Calendar Logic
   const today = new Date();
@@ -118,9 +118,13 @@ export default function ConsolePage() {
   return (
     <div className="mx-auto max-w-6xl space-y-6 animate-fade-in">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Instructor Console</h1>
+        <h1 className="text-2xl font-bold text-foreground">
+          {user?.role === "admin" ? "Admin Console" : "Instructor Console"}
+        </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Manage content, track performance, and build assessments.
+          {user?.role === "admin" 
+            ? "Platform overview and key performance metrics." 
+            : "Manage content, track performance, and build assessments."}
         </p>
       </div>
 
@@ -168,9 +172,9 @@ export default function ConsolePage() {
         </Card>
 
         {/* My Courses & Calendar */}
-        <Card className="p-6 border border-border/50 shadow-sm flex flex-col justify-between">
-          <div>
-            <h3 className="font-bold text-foreground">My Courses</h3>
+        {user?.role === "admin" ? (
+          <Card className="p-6 border border-border/50 shadow-sm flex flex-col">
+            <h3 className="font-bold text-foreground">Top Courses</h3>
             <p className="text-sm text-muted-foreground">By enrollment</p>
             <div className="mt-6 space-y-4">
               {topCourses.map((c) => {
@@ -194,136 +198,169 @@ export default function ConsolePage() {
                 )
               })}
             </div>
-          </div>
+          </Card>
+        ) : (
+          <Card className="p-6 border border-border/50 shadow-sm flex flex-col justify-between">
+            <div>
+              <h3 className="font-bold text-foreground">My Courses</h3>
+              <p className="text-sm text-muted-foreground">By enrollment</p>
+              <div className="mt-6 space-y-4">
+                {topCourses.map((c) => {
+                  const pct = totalStudents > 0 ? (c.students / totalStudents) * 100 : 0
+                  return (
+                    <div key={c.id} className="flex items-center gap-4">
+                      <img src={c.thumbnail} alt={c.title} className="h-10 w-10 rounded-lg object-cover flex-shrink-0 border border-border/30" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-center mb-1.5 text-sm">
+                          <span className="font-medium text-foreground truncate mr-2">{c.title}</span>
+                          <span className="text-muted-foreground whitespace-nowrap text-xs font-semibold">{pct.toFixed(1)}%</span>
+                        </div>
+                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                          <div
+                            className="h-full rounded-full bg-success transition-all duration-500"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
 
-          <div className="mt-8 pt-6 border-t border-border/50">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="font-bold text-foreground text-sm">Lecture Calendar</h3>
-                <p className="text-[11px] font-medium text-primary mt-0.5">{today.toLocaleDateString('default', { month: 'long', year: 'numeric' })}</p>
+            <div className="mt-8 pt-6 border-t border-border/50">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="font-bold text-foreground text-sm">Lecture Calendar</h3>
+                  <p className="text-[11px] font-medium text-primary mt-0.5">{today.toLocaleDateString('default', { month: 'long', year: 'numeric' })}</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground"><span className="h-2 w-2 rounded-full bg-primary"></span> Today</span>
+                  <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground"><span className="h-2 w-2 rounded-full bg-warning"></span> Lecture</span>
+                </div>
               </div>
-              <div className="flex items-center gap-3">
-                <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground"><span className="h-2 w-2 rounded-full bg-primary"></span> Today</span>
-                <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground"><span className="h-2 w-2 rounded-full bg-warning"></span> Lecture</span>
+              
+              <div className="grid grid-cols-7 gap-1 text-center mb-2">
+                {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(d => (
+                  <div key={d} className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">{d}</div>
+                ))}
+              </div>
+              <div className="grid grid-cols-7 gap-1">
+                {calendarDays.map((day, idx) => {
+                  if (!day) return <div key={`empty-${idx}`} className="p-1.5" />;
+                  const isToday = day === today.getDate();
+                  const hasLecture = scheduledDates.has(day);
+                  
+                  return (
+                    <div key={day} className="relative flex flex-col items-center justify-center p-1.5 rounded-lg transition-all hover:bg-muted/50 cursor-pointer group h-8">
+                      <span className={`text-xs font-semibold z-10 ${isToday ? "text-white" : "text-foreground"}`}>
+                        {day}
+                      </span>
+                      
+                      {isToday && (
+                        <div className="absolute inset-0 bg-primary rounded-lg shadow-md shadow-primary/20 -z-0"></div>
+                      )}
+                      
+                      {hasLecture && (
+                        <div className={`absolute bottom-1 h-1 w-1 rounded-full z-10 ${isToday ? "bg-white" : "bg-warning shadow-[0_0_8px_rgba(var(--color-warning),0.8)]"}`}></div>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
             </div>
-            
-            <div className="grid grid-cols-7 gap-1 text-center mb-2">
-              {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(d => (
-                <div key={d} className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">{d}</div>
-              ))}
-            </div>
-            <div className="grid grid-cols-7 gap-1">
-              {calendarDays.map((day, idx) => {
-                if (!day) return <div key={`empty-${idx}`} className="p-1.5" />;
-                const isToday = day === today.getDate();
-                const hasLecture = scheduledDates.has(day);
-                
-                return (
-                  <div key={day} className="relative flex flex-col items-center justify-center p-1.5 rounded-lg transition-all hover:bg-muted/50 cursor-pointer group h-8">
-                    <span className={`text-xs font-semibold z-10 ${isToday ? "text-white" : "text-foreground"}`}>
-                      {day}
-                    </span>
-                    
-                    {isToday && (
-                      <div className="absolute inset-0 bg-primary rounded-lg shadow-md shadow-primary/20 -z-0"></div>
-                    )}
-                    
-                    {hasLecture && (
-                      <div className={`absolute bottom-1 h-1 w-1 rounded-full z-10 ${isToday ? "bg-white" : "bg-warning shadow-[0_0_8px_rgba(var(--color-warning),0.8)]"}`}></div>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        </Card>
+          </Card>
+        )}
       </div>
 
       {/* Course Content Builder */}
-      <Card className="p-6 border border-border/50 shadow-sm">
-        <h3 className="font-bold text-foreground">Course Content Builder</h3>
-        <p className="text-sm text-muted-foreground mb-6">
-          Upload resources directly to the first course (Artificial Intelligence & Deep Learning).
-        </p>
+      {user?.role !== "admin" && (
+        <Card className="p-6 border border-border/50 shadow-sm">
+          <h3 className="font-bold text-foreground">Course Content Builder</h3>
+          <p className="text-sm text-muted-foreground mb-6">
+            Upload resources directly to the first course (Artificial Intelligence & Deep Learning).
+          </p>
 
-        <div className="border-2 border-dashed border-border/70 rounded-xl p-8 flex flex-col items-center justify-center text-center bg-card hover:bg-muted/30 transition-colors">
-          <CloudUpload className="h-10 w-10 text-muted-foreground mb-3" />
-          <p className="font-semibold text-foreground">Drag & drop files here</p>
-          <p className="text-xs text-muted-foreground mb-4">MP4, PDF, DOCX, ZIP up to 500MB</p>
-          <Button variant="outline" className="text-sm font-medium shadow-sm border-border/80">Simulate File Upload</Button>
-        </div>
-
-        <div className="mt-4 flex items-center justify-between p-3 rounded-lg border border-border bg-muted/10 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="bg-primary/10 text-primary p-2 rounded-lg">
-              <FileVideo className="h-4 w-4" />
-            </div>
-            <span className="font-medium text-sm text-foreground">intro-lecture.mp4</span>
-            <Badge color="success" className="text-[10px] font-semibold bg-success/10"><CheckCircle2 className="h-3 w-3 mr-1 inline"/> Syncing with Firestore</Badge>
+          <div className="border-2 border-dashed border-border/70 rounded-xl p-8 flex flex-col items-center justify-center text-center bg-card hover:bg-muted/30 transition-colors">
+            <CloudUpload className="h-10 w-10 text-muted-foreground mb-3" />
+            <p className="font-semibold text-foreground">Drag & drop files here</p>
+            <p className="text-xs text-muted-foreground mb-4">MP4, PDF, DOCX, ZIP up to 500MB</p>
+            <Button variant="outline" className="text-sm font-medium shadow-sm border-border/80">Simulate File Upload</Button>
           </div>
-        </div>
-      </Card>
+
+          <div className="mt-4 flex items-center justify-between p-3 rounded-lg border border-border bg-muted/10 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="bg-primary/10 text-primary p-2 rounded-lg">
+                <FileVideo className="h-4 w-4" />
+              </div>
+              <span className="font-medium text-sm text-foreground">intro-lecture.mp4</span>
+              <Badge color="success" className="text-[10px] font-semibold bg-success/10"><CheckCircle2 className="h-3 w-3 mr-1 inline"/> Syncing with Firestore</Badge>
+            </div>
+          </div>
+        </Card>
+      )}
 
       {/* Quiz Question Builder */}
-      <Card className="p-6 border border-border/50 shadow-sm">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h3 className="font-bold text-foreground">Quiz Question Builder</h3>
-            <p className="text-sm text-muted-foreground">Create multiple-choice questions.</p>
-          </div>
-          <Button variant="primary" className="text-sm shadow-sm"><Plus className="h-4 w-4 mr-1"/> Add question</Button>
-        </div>
-
-        <div className="border border-border/70 rounded-xl p-6 bg-card shadow-sm space-y-4">
-          <div className="flex items-start gap-4">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold text-sm shrink-0">
-              1
+      {user?.role !== "admin" && (
+        <Card className="p-6 border border-border/50 shadow-sm">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="font-bold text-foreground">Quiz Question Builder</h3>
+              <p className="text-sm text-muted-foreground">Create multiple-choice questions.</p>
             </div>
-            <div className="flex-1 space-y-4 mt-0.5">
-              <input 
-                type="text"
-                placeholder="Enter your question..."
-                value={questionText}
-                onChange={e => setQuestionText(e.target.value)}
-                className="w-full rounded-lg border border-input bg-card px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary shadow-sm"
-              />
-              
-              <div className="flex items-center gap-3">
-                <CheckCircle2 className="h-5 w-5 text-success shrink-0" />
+            <Button variant="primary" className="text-sm shadow-sm"><Plus className="h-4 w-4 mr-1"/> Add question</Button>
+          </div>
+
+          <div className="border border-border/70 rounded-xl p-6 bg-card shadow-sm space-y-4">
+            <div className="flex items-start gap-4">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold text-sm shrink-0">
+                1
+              </div>
+              <div className="flex-1 space-y-4 mt-0.5">
                 <input 
                   type="text"
-                  placeholder="Answer option..."
-                  value={option1}
-                  onChange={e => setOption1(e.target.value)}
+                  placeholder="Enter your question..."
+                  value={questionText}
+                  onChange={e => setQuestionText(e.target.value)}
                   className="w-full rounded-lg border border-input bg-card px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary shadow-sm"
                 />
-              </div>
+                
+                <div className="flex items-center gap-3">
+                  <CheckCircle2 className="h-5 w-5 text-success shrink-0" />
+                  <input 
+                    type="text"
+                    placeholder="Answer option..."
+                    value={option1}
+                    onChange={e => setOption1(e.target.value)}
+                    className="w-full rounded-lg border border-input bg-card px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary shadow-sm"
+                  />
+                </div>
 
-              <div className="flex items-center gap-3">
-                <Circle className="h-5 w-5 text-muted-foreground shrink-0" />
-                <input 
-                  type="text"
-                  placeholder="Answer option..."
-                  value={option2}
-                  onChange={e => setOption2(e.target.value)}
-                  className="w-full rounded-lg border border-input bg-card px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary shadow-sm"
-                />
-              </div>
+                <div className="flex items-center gap-3">
+                  <Circle className="h-5 w-5 text-muted-foreground shrink-0" />
+                  <input 
+                    type="text"
+                    placeholder="Answer option..."
+                    value={option2}
+                    onChange={e => setOption2(e.target.value)}
+                    className="w-full rounded-lg border border-input bg-card px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary shadow-sm"
+                  />
+                </div>
 
-              <button className="text-primary text-xs font-semibold flex items-center mt-3 hover:underline">
-                <Plus className="h-3 w-3 mr-1" /> Add option
-              </button>
+                <button className="text-primary text-xs font-semibold flex items-center mt-3 hover:underline">
+                  <Plus className="h-3 w-3 mr-1" /> Add option
+                </button>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="mt-6 flex justify-end">
-          <Button variant="success" className="font-semibold shadow-sm px-6" onClick={handlePublishQuiz}>
-            <CheckCircle2 className="h-4 w-4 mr-2" /> Publish Quiz
-          </Button>
-        </div>
-      </Card>
+          <div className="mt-6 flex justify-end">
+            <Button variant="success" className="font-semibold shadow-sm px-6" onClick={handlePublishQuiz}>
+              <CheckCircle2 className="h-4 w-4 mr-2" /> Publish Quiz
+            </Button>
+          </div>
+        </Card>
+      )}
 
       {/* Success Popup */}
       {showSuccess && (
