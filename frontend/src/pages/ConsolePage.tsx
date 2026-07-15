@@ -116,6 +116,22 @@ export default function ConsolePage() {
   });
 
   // Admin Panels Data
+  const upcomingLectures = [
+    { id: "lec-1", subject: "Network Penetration Testing", course: "Cybersecurity & Ethical Hacking", time: "Today, 10:00 AM" },
+    { id: "lec-2", subject: "Neural Networks Basics", course: "Artificial Intelligence & Deep Learning", time: "Tomorrow, 2:00 PM" },
+    { id: "lec-3", subject: "State Management with Context", course: "Advanced React Architecture", time: "Thu, 11:30 AM" }
+  ];
+
+  const activeStudents = Math.round(totalStudents * 0.85);
+  const activePercent = totalStudents > 0 ? Math.round((activeStudents / totalStudents) * 100) : 0;
+
+  const popularSubjects = [
+    { name: "Cybersecurity & Ethical Hacking", percent: 35, color: "bg-primary" },
+    { name: "Artificial Intelligence & Deep Learning", percent: 28, color: "bg-success" },
+    { name: "Data Science & ML Bootcamp", percent: 20, color: "bg-warning" },
+    { name: "Advanced React & Frontend", percent: 17, color: "bg-destructive" },
+  ];
+
   const uniqueLecturers = Array.from(new Set(courses.map(c => c.instructor).filter(Boolean)));
   const totalLecturerCount = uniqueLecturers.length;
   const lecturersList = uniqueLecturers.map((name, idx) => ({
@@ -213,6 +229,28 @@ export default function ConsolePage() {
                   </div>
                 ))}
               </div>
+
+              {/* Upcoming Lectures List */}
+              <div className="mt-6 pt-6 border-t border-border/50 space-y-3">
+                <h4 className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">This Week's Lectures</h4>
+                {upcomingLectures.map((lec) => (
+                  <div key={lec.id} className="flex items-center gap-3 rounded-xl border border-border/50 bg-muted/20 p-3 shadow-sm hover:border-primary/50 transition-colors cursor-pointer group">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                      <FileVideo className="h-4 w-4" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="truncate text-xs font-bold text-foreground group-hover:text-primary transition-colors">{lec.subject}</h4>
+                      <p className="truncate text-[10px] font-medium text-muted-foreground">{lec.course}</p>
+                    </div>
+                    <div className="shrink-0">
+                      <Badge color="primary" className="bg-primary/10 text-primary group-hover:bg-primary/20 text-[9px] font-bold border-0 px-2 py-0.5">
+                        <Clock className="h-2.5 w-2.5 mr-1 inline" />
+                        {lec.time}
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </Card>
 
             {/* Students Panel */}
@@ -236,6 +274,43 @@ export default function ConsolePage() {
                     </div>
                   </div>
                 ))}
+              </div>
+
+              {/* Pie Chart & Subject Stats */}
+              <div className="mt-6 pt-6 border-t border-border/50">
+                <h4 className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-4">Student Activity & Interests</h4>
+                <div className="flex items-center gap-6">
+                  
+                  {/* Pie Chart */}
+                  <div className="flex flex-col items-center gap-2">
+                    <div 
+                      className="relative w-20 h-20 rounded-full flex items-center justify-center shadow-inner" 
+                      style={{ background: `conic-gradient(hsl(var(--primary)) ${activePercent}%, hsl(var(--muted)) 0)` }}
+                    >
+                      <div className="absolute inset-1.5 bg-card rounded-full flex flex-col items-center justify-center shadow-sm">
+                        <span className="text-xs font-bold text-foreground">{activePercent}%</span>
+                      </div>
+                    </div>
+                    <div className="flex gap-3 text-[10px] font-semibold text-muted-foreground">
+                      <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-primary"></span>Active</span>
+                      <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-muted"></span>On-hold</span>
+                    </div>
+                  </div>
+
+                  {/* Popular Subjects */}
+                  <div className="flex-1 space-y-3">
+                    {popularSubjects.map((sub, idx) => (
+                      <div key={idx} className="flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2">
+                          <span className={`w-2 h-2 rounded-full ${sub.color}`}></span>
+                          <span className="text-muted-foreground truncate max-w-[140px]">{sub.name}</span>
+                        </div>
+                        <span className="font-bold text-foreground">{sub.percent}%</span>
+                      </div>
+                    ))}
+                  </div>
+
+                </div>
               </div>
             </Card>
           </div>
