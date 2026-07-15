@@ -218,20 +218,8 @@ export default function ConsolePage() {
                   Total: {totalLecturerCount}
                 </Badge>
               </div>
-              <div className="space-y-3">
-                {lecturersList.map(lec => (
-                  <div key={lec.id} className="flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-card hover:border-primary/50 transition-colors shadow-sm cursor-pointer group">
-                    <img src={lec.avatar} alt={lec.name} className="h-10 w-10 rounded-full object-cover border border-border group-hover:border-primary/50 transition-colors bg-muted/50" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-foreground truncate group-hover:text-primary transition-colors">{lec.name}</p>
-                      <p className="text-[11px] font-medium text-muted-foreground truncate">{lec.courses}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
               {/* Upcoming Lectures List */}
-              <div className="mt-6 pt-6 border-t border-border/50 space-y-3">
+              <div className="space-y-3">
                 <h4 className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">This Week's Lectures</h4>
                 {upcomingLectures.map((lec) => (
                   <div key={lec.id} className="flex items-center gap-3 rounded-xl border border-border/50 bg-muted/20 p-3 shadow-sm hover:border-primary/50 transition-colors cursor-pointer group">
