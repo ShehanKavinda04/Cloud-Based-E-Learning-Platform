@@ -44,7 +44,7 @@ const INSTRUCTOR_NAV = [
 ]
 
 export default function DashboardLayout() {
-  const { user, setUser, notifications, markAllRead } = useApp()
+  const { user, setUser, notifications, markAllRead, removeNotification } = useApp()
   const navigate = useNavigate()
   const [notifOpen, setNotifOpen] = useState(false)
   const [mobileNav, setMobileNav] = useState(false)
@@ -184,11 +184,23 @@ export default function DashboardLayout() {
                       {notifications.map((n) => (
                         <div
                           key={n.id}
-                          className="rounded-xl px-3 py-2.5 transition-colors hover:bg-muted"
+                          className="rounded-xl px-3 py-2.5 transition-colors hover:bg-muted group"
                         >
                           <div className="flex items-center justify-between">
                             <p className="text-sm font-semibold text-foreground">{n.title}</p>
-                            <span className="text-xs text-muted-foreground">{n.timeAgo}</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-muted-foreground">{n.timeAgo}</span>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  removeNotification(n.id)
+                                }}
+                                className="text-muted-foreground hover:text-destructive opacity-0 transition-opacity group-hover:opacity-100"
+                                aria-label="Remove notification"
+                              >
+                                <X className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
                           </div>
                           <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
                             {n.body}
@@ -201,11 +213,13 @@ export default function DashboardLayout() {
               )}
             </div>
 
-            <img
-              src={user?.avatar || "/avatars/student.png"}
-              alt="Your avatar"
-              className="h-10 w-10 rounded-xl border border-border object-cover"
-            />
+            <button onClick={() => navigate("/profile")} className="focus:outline-none rounded-xl">
+              <img
+                src={user?.avatar || "/avatars/student.png"}
+                alt="Your avatar"
+                className="h-10 w-10 rounded-xl border border-border object-cover transition-transform hover:scale-105"
+              />
+            </button>
           </div>
         </header>
 

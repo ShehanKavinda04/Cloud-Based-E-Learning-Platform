@@ -48,6 +48,7 @@ interface AppState {
   approveApplication: (appId: string) => Promise<void>
   rejectApplication: (appId: string) => void
   publishQuiz: (quiz: QuizDoc) => Promise<void>
+  removeNotification: (id: string) => void
   loading: boolean
 }
 
@@ -300,6 +301,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     })
   }
 
+  const removeNotification = (id: string) => {
+    setNotifications((prev) => prev.filter((n) => n.id !== id))
+  }
+
   const value = useMemo<AppState>(
     () => ({
       user,
@@ -324,6 +329,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       approveApplication,
       rejectApplication,
       publishQuiz,
+      removeNotification,
       loading,
     }),
     [user, courses, quizzes, progress, notifications, rejectedAdminCourses, courseApplications, loading],
