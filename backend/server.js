@@ -365,6 +365,12 @@ seedLiveDb()
 
 // ----------------- API Route Mappings -----------------
 
+// 0. Root Check
+app.get("/", (req, res) => {
+  res.send("EduVantage Backend API is running.");
+})
+
+
 // 1. Auth: Register
 app.post("/api/auth/register", async (req, res) => {
   const { name, email, password, role } = req.body
