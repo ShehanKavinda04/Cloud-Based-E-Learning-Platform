@@ -134,6 +134,9 @@ export default function ConsolePage() {
 
   const uniqueLecturers = Array.from(new Set(courses.map(c => c.instructor).filter(Boolean)));
   const totalLecturerCount = uniqueLecturers.length;
+  const inactiveLecturersCount = 2; // mock data for inactive
+  const totalPlatformLecturers = totalLecturerCount + inactiveLecturersCount;
+  const activeLecturerPercent = totalPlatformLecturers > 0 ? Math.round((totalLecturerCount / totalPlatformLecturers) * 100) : 0;
   const lecturersList = uniqueLecturers.map((name, idx) => ({
     id: `lec-profile-${idx}`,
     name,
@@ -214,30 +217,59 @@ export default function ConsolePage() {
                   <h3 className="font-bold text-foreground">Lecturers</h3>
                   <p className="text-sm text-muted-foreground">Active instructors</p>
                 </div>
-                <Badge color="primary" className="bg-primary/10 text-primary font-bold border-0">
+                <Badge className="bg-blue-500/15 text-blue-600 dark:text-blue-400 font-bold border-0">
                   Total: {totalLecturerCount}
                 </Badge>
               </div>
+
+              {/* Instructor Activity Pie Chart */}
+              <div className="mb-6 flex items-center justify-between p-4 rounded-xl border border-border/40 bg-background/60 shadow-sm">
+                <div className="flex flex-col">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Monthly Status</span>
+                  <div className="flex gap-4 mt-2">
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+                      <span className="w-2.5 h-2.5 rounded-full bg-primary shadow-sm"></span>
+                      {totalLecturerCount} Active
+                    </div>
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+                      <span className="w-2.5 h-2.5 rounded-full bg-primary/20 shadow-sm"></span>
+                      {inactiveLecturersCount} Inactive
+                    </div>
+                  </div>
+                </div>
+                
+                <div 
+                  className="relative w-14 h-14 rounded-full flex items-center justify-center shadow-inner shrink-0" 
+                  style={{ background: `conic-gradient(hsl(var(--primary)) ${activeLecturerPercent}%, hsl(var(--primary) / 0.15) 0)` }}
+                >
+                  <div className="absolute inset-1.5 bg-background rounded-full flex flex-col items-center justify-center shadow-sm border border-border/20">
+                    <span className="text-[10px] font-bold text-foreground">{activeLecturerPercent}%</span>
+                  </div>
+                </div>
+              </div>
+
               {/* Upcoming Lectures List */}
               <div className="space-y-3">
                 <h4 className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">This Week's Lectures</h4>
-                {upcomingLectures.map((lec) => (
-                  <div key={lec.id} className="flex items-center gap-3 rounded-xl border border-border/50 bg-muted/20 p-3 shadow-sm hover:border-primary/50 transition-colors cursor-pointer group">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                      <FileVideo className="h-4 w-4" />
-                    </div>
+                {upcomingLectures.map((lec) => {
+                  const courseObj = courses.find(c => c.title === lec.course);
+                  const instructorName = courseObj?.instructor || "Unknown";
+                  const avatarUrl = `https://api.dicebear.com/7.x/notionists/svg?seed=${instructorName.replace(/\s/g, '')}`;
+                  return (
+                  <div key={lec.id} className="flex items-center gap-3 rounded-xl border border-border/40 bg-background/50 p-3 shadow-sm hover:border-primary/50 hover:bg-card transition-colors cursor-pointer group">
+                    <img src={avatarUrl} alt={instructorName} className="h-8 w-8 shrink-0 rounded-full object-cover border border-border/50 bg-muted/50" />
                     <div className="flex-1 min-w-0">
                       <h4 className="truncate text-xs font-bold text-foreground group-hover:text-primary transition-colors">{lec.subject}</h4>
                       <p className="truncate text-[10px] font-medium text-muted-foreground">{lec.course}</p>
                     </div>
                     <div className="shrink-0">
-                      <Badge color="primary" className="bg-primary/10 text-primary group-hover:bg-primary/20 text-[9px] font-bold border-0 px-2 py-0.5">
+                      <Badge className="bg-blue-500/15 text-blue-600 dark:text-blue-400 group-hover:bg-blue-500/25 text-[9px] font-bold border-0 px-2 py-0.5">
                         <Clock className="h-2.5 w-2.5 mr-1 inline" />
                         {lec.time}
                       </Badge>
                     </div>
                   </div>
-                ))}
+                )})}
               </div>
             </Card>
 
@@ -246,26 +278,13 @@ export default function ConsolePage() {
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h3 className="font-bold text-foreground">Recent Students</h3>
-                  <p className="text-sm text-muted-foreground">Newly enrolled</p>
                 </div>
                 <Badge color="success" className="bg-success/10 text-success font-bold border-0">
                   Total: {totalStudents.toLocaleString()}
                 </Badge>
               </div>
-              <div className="space-y-3">
-                {studentsList.map(student => (
-                  <div key={student.id} className="flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-card hover:border-success/50 transition-colors shadow-sm cursor-pointer group">
-                    <img src={student.avatar} alt={student.name} className="h-10 w-10 rounded-full object-cover border border-border group-hover:border-success/50 transition-colors bg-muted/50" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-foreground truncate group-hover:text-success transition-colors">{student.name}</p>
-                      <p className="text-[11px] font-medium text-muted-foreground truncate">{student.course}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
               {/* Pie Chart & Subject Stats */}
-              <div className="mt-6 pt-6 border-t border-border/50">
+              <div>
                 <h4 className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-4">Student Activity & Interests</h4>
                 <div className="flex items-center gap-6">
                   
