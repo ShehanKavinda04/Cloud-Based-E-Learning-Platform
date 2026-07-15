@@ -8,7 +8,10 @@ import {
   Plus,
   CheckCircle2,
   Circle,
-  FileVideo
+  FileVideo,
+  GraduationCap,
+  Presentation,
+  BookOpen
 } from "lucide-react"
 import { Card, Badge, Button } from "@/components/ui/Primitives"
 import { useApp } from "@/store/AppContext"
@@ -55,17 +58,18 @@ export default function ConsolePage() {
     setTimeout(() => setShowSuccess(false), 3500)
   }
 
-  // Calculate dynamic KPIs
+  // Context-specific totals (used elsewhere)
   const totalStudents = instructorCourses.reduce((sum, c) => sum + c.students, 0)
-  const activeHours = Math.round(totalStudents * 5.8)
-  const avgRating = instructorCourses.length > 0 
-    ? (instructorCourses.reduce((sum, c) => sum + c.rating, 0) / instructorCourses.length).toFixed(1) 
-    : "0.0"
+
+  // System-wide calculations for KPIs
+  const systemTotalStudents = courses.reduce((sum, c) => sum + c.students, 0)
+  const systemTotalLecturers = new Set(courses.map(c => c.instructor).filter(Boolean)).size
+  const systemTotalCourses = courses.length
 
   const dynamicKPIs = [
-    { label: "Total Students", value: totalStudents.toLocaleString(), delta: "+12.4%", icon: Users, color: "text-primary bg-primary/10" },
-    { label: "Active Hours", value: activeHours.toLocaleString(), delta: "+8.1%", icon: Clock, color: "text-success bg-success/10" },
-    { label: "Avg. Course Rating", value: avgRating, delta: "+0.2", icon: Star, color: "text-warning bg-warning/10" },
+    { label: "Total Students", value: systemTotalStudents.toLocaleString(), delta: "+12.4%", icon: GraduationCap, color: "text-primary bg-primary/10" },
+    { label: "Total Lecturers", value: systemTotalLecturers.toLocaleString(), delta: "+5.2%", icon: Presentation, color: "text-success bg-success/10" },
+    { label: "Total Courses", value: systemTotalCourses.toLocaleString(), delta: "+18.1%", icon: BookOpen, color: "text-warning bg-warning/10" },
   ]
 
   const weeklyTotal = totalStudents > 0 ? Math.round(totalStudents * 0.02) : 0
