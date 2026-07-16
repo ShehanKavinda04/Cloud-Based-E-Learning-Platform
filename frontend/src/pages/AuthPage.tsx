@@ -10,6 +10,8 @@ import {
   Loader2,
   CheckCircle2,
   Zap,
+  Eye,
+  EyeOff,
 } from "lucide-react"
 import { Button } from "@/components/ui/Primitives"
 import { useApp } from "@/store/AppContext"
@@ -234,17 +236,37 @@ function Field({
   value: string
   onChange: (v: string) => void
 }) {
+  const [showPassword, setShowPassword] = useState(false)
+  const isPassword = type === "password"
+  const inputType = isPassword ? (showPassword ? "text" : "password") : type
+
   return (
     <div className="relative">
       <Icon className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
       <input
-        type={type}
+        type={inputType}
         required
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="h-12 w-full rounded-xl border border-input bg-card pl-11 pr-4 text-sm outline-none transition-all duration-300 focus:border-primary focus:ring-2 focus:ring-ring/30"
+        className={cn(
+          "h-12 w-full rounded-xl border border-input bg-card pl-11 pr-4 text-sm outline-none transition-all duration-300 focus:border-primary focus:ring-2 focus:ring-ring/30",
+          isPassword && "pr-11"
+        )}
       />
+      {isPassword && (
+        <button
+          type="button"
+          onClick={() => setShowPassword(!showPassword)}
+          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none cursor-pointer"
+        >
+          {showPassword ? (
+            <EyeOff className="h-5 w-5" />
+          ) : (
+            <Eye className="h-5 w-5" />
+          )}
+        </button>
+      )}
     </div>
   )
 }
