@@ -385,6 +385,89 @@ const verifyToken = async (req, res, next) => {
   }
 }
 
+// 0.1 Auth: Register (Legacy / Postman Support)
+app.post("/api/auth/register", async (req, res) => {
+  const { name, email, password, role } = req.body
+  if (!name || !email || !password || !role) {
+    return res.status(400).json({ error: "All fields are required." })
+  }
+
+  if (isFirebaseConfigured && authInstance && dbInstance) {
+    try {
+      // Use Admin SDK to create user
+      const userRecord = await authInstance.createUser({
+        email,
+        password,
+        displayName: name,
+      })
+      const uid = userRecord.uid
+      const userDocData = {
+        name,
+        email,
+        role,
+        avatar: role === "instructor" ? "/avatars/instructor.png" : 
+                role === "admin" ? "/avatars/admin.png" : "/avatars/student.png",
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      }
+      await dbInstance.collection("users").doc(uid).set(userDocData)
+      return res.json({ uid, ...userDocData })
+    } catch (err) {
+      return res.status(400).json({ error: err.message })
+    }
+  } else {
+    // Mock Signup
+    if (mockUsers.some((u) => u.email === email)) {
+      return res.status(400).json({ error: "Email already in use." })
+    }
+    const uid = `mock_uid_${Math.random().toString(36).slice(2, 10)}`
+    const newUser = {
+      uid,
+      name,
+      email,
+      role,
+      avatar: role === "instructor" ? "/avatars/instructor.png" : 
+              role === "admin" ? "/avatars/admin.png" : "/avatars/student.png",
+      createdAt: Date.now(),
+    }
+    mockUsers.push(newUser)
+    return res.json(newUser)
+  }
+})
+
+// 0.2 Auth: Login (Legacy / Postman Support)
+app.post("/api/auth/login", async (req, res) => {
+  const { email, password, role } = req.body
+  if (!email || !password) {
+    return res.status(400).json({ error: "Email and password are required." })
+  }
+
+  if (isFirebaseConfigured && authInstance && dbInstance) {
+    // Note: Admin SDK cannot verify passwords to generate an ID token.
+    // This should ideally happen on the client using the Firebase Client SDK.
+    // For this endpoint to work in a backend-only scenario, it would require calling the Identity Toolkit REST API.
+    return res.status(400).json({ 
+      error: "Password login must be handled by the frontend Firebase Client SDK." 
+    })
+  } else {
+    // Mock Login
+    let user = mockUsers.find((u) => u.email === email)
+    if (!user) {
+      user = {
+        uid: `mock_uid_${Math.random().toString(36).slice(2, 10)}`,
+        name: email.split("@")[0].replace(/[._]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+        email,
+        role: role || "student",
+        avatar: role === "instructor" ? "/avatars/instructor.png" : 
+                role === "admin" ? "/avatars/admin.png" : "/avatars/student.png",
+        createdAt: Date.now(),
+      }
+      mockUsers.push(user)
+    }
+    return res.json(user)
+  }
+}
+)
+
 // 1. Auth / Users: Create Profile
 // Called after the frontend registers the user directly with Firebase Auth
 app.post("/api/users/profile", verifyToken, async (req, res) => {
