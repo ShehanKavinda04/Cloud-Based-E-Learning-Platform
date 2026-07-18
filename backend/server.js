@@ -680,6 +680,23 @@ app.post("/api/quizzes", async (req, res) => {
   }
 })
 
+// 6.1 Quizzes: Submit
+app.post("/api/quizzes/submit", verifyToken, async (req, res) => {
+  const { quizId, answers } = req.body
+  const uid = req.user.uid
+
+  if (!quizId || !answers) {
+    return res.status(400).json({ error: "quizId and answers are required." })
+  }
+
+  // We can just return a basic success response to acknowledge submission
+  return res.status(200).json({ 
+    success: true, 
+    message: "Quiz submitted successfully!",
+    submittedAnswers: answers.length
+  })
+})
+
 // 7. Student Progress: Fetch for User
 app.get("/api/progress/:uid", async (req, res) => {
   const { uid } = req.params
