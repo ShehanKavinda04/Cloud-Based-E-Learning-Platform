@@ -594,6 +594,51 @@ app.post("/api/courses", async (req, res) => {
   }
 })
 
+// 4.1 Courses: Enroll (Create initial progress entry)
+app.post("/api/courses/enroll/:courseId", verifyToken, async (req, res) => {
+  const { courseId } = req.params
+  const uid = req.user.uid
+
+  if (!courseId) {
+    return res.status(400).json({ error: "Course ID is required." })
+  }
+
+  if (isFirebaseConfigured && dbInstance) {
+    try {
+      const progressRef = dbInstance.collection("progress").doc(`${uid}_${courseId}`)
+      const progressDoc = await progressRef.get()
+
+      if (progressDoc.exists) {
+        return res.status(400).json({ error: "Already enrolled in this course." })
+      }
+
+      const progressData = {
+        uid,
+        courseId,
+        completedLessonIds: [],
+        lastAccessed: admin.firestore.FieldValue.serverTimestamp(),
+      }
+
+      await progressRef.set(progressData)
+      return res.status(201).json({ success: true, message: "Enrolled successfully", progress: progressData })
+    } catch (err) {
+      return res.status(500).json({ error: err.message })
+    }
+  } else {
+    // Mock Enrollment
+    if (!mockProgress[uid]) {
+      mockProgress[uid] = {}
+    }
+    
+    if (mockProgress[uid][courseId]) {
+      return res.status(400).json({ error: "Already enrolled in this course." })
+    }
+
+    mockProgress[uid][courseId] = []
+    return res.status(201).json({ success: true, message: "Enrolled successfully" })
+  }
+})
+
 // 5. Quizzes: Fetch All
 app.get("/api/quizzes", async (req, res) => {
   if (isFirebaseConfigured && dbInstance) {
