@@ -697,6 +697,17 @@ app.post("/api/quizzes/submit", verifyToken, async (req, res) => {
   })
 })
 
+// 6.2 Quizzes: Fetch Grades
+app.get("/api/quizzes/grades", verifyToken, async (req, res) => {
+  const uid = req.user.uid;
+  
+  // Return a mock array of grades for the user
+  return res.json([
+    { quizId: "data-science-101", score: 85, passed: true, date: Date.now() },
+    { quizId: "web-dev-101", score: 92, passed: true, date: Date.now() }
+  ])
+})
+
 // 7. Student Progress: Fetch for User
 app.get("/api/progress/:uid", async (req, res) => {
   const { uid } = req.params
