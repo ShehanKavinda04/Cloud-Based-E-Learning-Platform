@@ -4,22 +4,7 @@ import dotenv from "dotenv"
 import { createRequire } from "module"
 
 const require = createRequire(import.meta.url)
-const { initializeApp, getApps } = require("firebase/app")
-const {
-  getAuth,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-} = require("firebase/auth")
-const {
-  getFirestore,
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  setDoc,
-  query,
-  where,
-} = require("firebase/firestore")
+const admin = require("firebase-admin")
 
 dotenv.config()
 
@@ -29,33 +14,35 @@ app.use(express.json())
 
 const PORT = process.env.PORT || 5001
 
-// 1. Firebase Initialization
+// 1. Firebase Admin Initialization
+// Make sure to add FIREBASE_PRIVATE_KEY and FIREBASE_CLIENT_EMAIL to your .env file
 const firebaseConfig = {
-  apiKey: process.env.VITE_FIREBASE_API_KEY || "",
-  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN || "",
-  projectId: process.env.VITE_FIREBASE_PROJECT_ID || "",
-  storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET || "",
-  messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "",
-  appId: process.env.VITE_FIREBASE_APP_ID || "",
+  projectId: process.env.VITE_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID || "",
+  clientEmail: process.env.FIREBASE_CLIENT_EMAIL || "",
+  privateKey: (process.env.FIREBASE_PRIVATE_KEY || "").replace(/\\n/g, '\n'),
 }
 
-const isFirebaseConfigured = !!firebaseConfig.apiKey
+const isFirebaseConfigured = !!firebaseConfig.projectId && !!firebaseConfig.privateKey
 
 let authInstance = null
 let dbInstance = null
 
 if (isFirebaseConfigured) {
   try {
-    const fbApp = initializeApp(firebaseConfig)
-    authInstance = getAuth(fbApp)
-    dbInstance = getFirestore(fbApp)
-    console.log("Firebase initialized successfully on backend server.")
+    if (!admin.apps.length) {
+      admin.initializeApp({
+        credential: admin.credential.cert(firebaseConfig),
+      })
+    }
+    authInstance = admin.auth()
+    dbInstance = admin.firestore()
+    console.log("Firebase Admin initialized successfully on backend server.")
   } catch (err) {
-    console.error("Firebase backend initialization failed:", err)
+    console.error("Firebase Admin initialization failed:", err)
   }
 } else {
   console.warn(
-    "Firebase config is missing on backend. Server is running in Mock In-Memory Database Mode."
+    "Firebase Admin config is missing. Server is running in Mock In-Memory Database Mode."
   )
 }
 
@@ -340,21 +327,23 @@ const mockProgress = {} // uid -> Record<courseId, completedLessonIds[]>
 async function seedLiveDb() {
   if (!isFirebaseConfigured || !dbInstance) return
   try {
-    const coursesRef = collection(dbInstance, "courses")
-    const coursesSnap = await getDocs(coursesRef)
+    const coursesRef = dbInstance.collection("courses")
+    const coursesSnap = await coursesRef.get()
+    
     if (coursesSnap.empty) {
       console.log("Seeding default courses to live Firestore...")
       for (const course of mockCourses) {
-        await setDoc(doc(dbInstance, "courses", course.id), course)
+        await coursesRef.doc(course.id).set(course)
       }
     }
 
-    const quizzesRef = collection(dbInstance, "quizzes")
-    const quizzesSnap = await getDocs(quizzesRef)
+    const quizzesRef = dbInstance.collection("quizzes")
+    const quizzesSnap = await quizzesRef.get()
+    
     if (quizzesSnap.empty) {
       console.log("Seeding default quizzes to live Firestore...")
       for (const quiz of mockQuizzes) {
-        await setDoc(doc(dbInstance, "quizzes", quiz.id), quiz)
+        await quizzesRef.doc(quiz.id).set(quiz)
       }
     }
   } catch (err) {
@@ -370,118 +359,114 @@ app.get("/", (req, res) => {
   res.send("EduVantage Backend API is running.");
 })
 
-
-// 1. Auth: Register
-app.post("/api/auth/register", async (req, res) => {
-  const { name, email, password, role } = req.body
-  if (!name || !email || !password || !role) {
-    return res.status(400).json({ error: "All fields are required." })
+// --- Middleware: Verify Firebase ID Token ---
+const verifyToken = async (req, res, next) => {
+  if (!isFirebaseConfigured) {
+    // In mock mode, we'll bypass real token verification
+    // and just use a dummy uid or one passed in headers for testing
+    const authHeader = req.headers.authorization
+    const mockUid = authHeader ? authHeader.split("Bearer ")[1] : "mock_uid_123"
+    req.user = { uid: mockUid }
+    return next()
   }
 
-  if (isFirebaseConfigured && authInstance && dbInstance) {
+  const token = req.headers.authorization?.split("Bearer ")[1]
+  if (!token) {
+    return res.status(401).json({ error: "Unauthorized: No token provided" })
+  }
+
+  try {
+    const decodedToken = await authInstance.verifyIdToken(token)
+    req.user = decodedToken
+    next()
+  } catch (error) {
+    console.error("Token verification failed:", error)
+    return res.status(401).json({ error: "Unauthorized: Invalid token" })
+  }
+}
+
+// 1. Auth / Users: Create Profile
+// Called after the frontend registers the user directly with Firebase Auth
+app.post("/api/users/profile", verifyToken, async (req, res) => {
+  const { name, role } = req.body
+  const uid = req.user.uid
+  const email = req.user.email || req.body.email
+
+  if (!name || !role) {
+    return res.status(400).json({ error: "Name and role are required." })
+  }
+
+  const avatar = role === "instructor" ? "/avatars/instructor.png" : 
+                 role === "admin" ? "/avatars/admin.png" : "/avatars/student.png"
+
+  if (isFirebaseConfigured && dbInstance) {
     try {
-      const userCredential = await createUserWithEmailAndPassword(
-        authInstance,
-        email,
-        password
-      )
-      const uid = userCredential.user.uid
+      const userRef = dbInstance.collection("users").doc(uid)
+      const userDoc = await userRef.get()
+
+      if (userDoc.exists) {
+        return res.status(400).json({ error: "User profile already exists." })
+      }
+
       const userDocData = {
+        uid,
         name,
         email,
         role,
-        avatar:
-          role === "instructor"
-            ? "/avatars/instructor.png"
-            : role === "admin"
-              ? "/avatars/admin.png"
-              : "/avatars/student.png",
-        createdAt: Date.now(),
+        avatar,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
       }
-      await setDoc(doc(dbInstance, "users", uid), userDocData)
-      return res.json({ uid, ...userDocData })
+
+      await userRef.set(userDocData)
+      return res.status(201).json(userDocData)
     } catch (err) {
-      return res.status(400).json({ error: err.message })
+      return res.status(500).json({ error: err.message })
     }
   } else {
-    // Mock Signup
-    if (mockUsers.some((u) => u.email === email)) {
-      return res.status(400).json({ error: "Email already in use." })
+    // Mock Profile Creation
+    if (mockUsers.some((u) => u.uid === uid)) {
+      return res.status(400).json({ error: "Profile already exists." })
     }
-    const uid = `mock_uid_${Math.random().toString(36).slice(2, 10)}`
-    const newUser = {
-      uid,
-      name,
-      email,
-      role,
-      avatar:
-        role === "instructor"
-          ? "/avatars/instructor.png"
-          : role === "admin"
-            ? "/avatars/admin.png"
-            : "/avatars/student.png",
-      createdAt: Date.now(),
-    }
+    const newUser = { uid, name, email, role, avatar, createdAt: Date.now() }
     mockUsers.push(newUser)
-    return res.json(newUser)
+    return res.status(201).json(newUser)
   }
 })
 
-// 2. Auth: Login
-app.post("/api/auth/login", async (req, res) => {
-  const { email, password, role } = req.body
-  if (!email || !password) {
-    return res.status(400).json({ error: "Email and password are required." })
-  }
+// 2. Auth / Users: Get Current Profile
+// Called after frontend logs in to fetch the user's role and details
+app.get("/api/users/profile", verifyToken, async (req, res) => {
+  const uid = req.user.uid
 
-  if (isFirebaseConfigured && authInstance && dbInstance) {
+  if (isFirebaseConfigured && dbInstance) {
     try {
-      const userCredential = await signInWithEmailAndPassword(
-        authInstance,
-        email,
-        password
-      )
-      const uid = userCredential.user.uid
-      const userSnap = await getDoc(doc(dbInstance, "users", uid))
-      if (userSnap.exists()) {
-        const data = userSnap.data()
-        return res.json({ uid, ...data })
+      const userDoc = await dbInstance.collection("users").doc(uid).get()
+      if (userDoc.exists) {
+        return res.json({ uid, ...userDoc.data() })
       } else {
-        // Create profile on the fly
-        const userDocData = {
-          name: email.split("@")[0],
-          email,
-          role: role || "student",
-          avatar: "/avatars/student.png",
-          createdAt: Date.now(),
-        }
-        await setDoc(doc(dbInstance, "users", uid), userDocData)
-        return res.json({ uid, ...userDocData })
+        return res.status(404).json({ error: "User profile not found." })
       }
     } catch (err) {
-      return res.status(400).json({ error: err.message })
+      return res.status(500).json({ error: err.message })
     }
   } else {
-    // Mock Login
-    let user = mockUsers.find((u) => u.email === email)
-    if (!user) {
-      // Create a mock user on the fly for ease of use
-      user = {
-        uid: `mock_uid_${Math.random().toString(36).slice(2, 10)}`,
-        name: email.split("@")[0].replace(/[._]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
-        email,
-        role: role || "student",
-        avatar:
-          role === "instructor"
-            ? "/avatars/instructor.png"
-            : role === "admin"
-              ? "/avatars/admin.png"
-              : "/avatars/student.png",
+    // Mock Fetch
+    const user = mockUsers.find((u) => u.uid === uid)
+    if (user) {
+      return res.json(user)
+    } else {
+      // Auto-create for mock ease of use if not found
+      const newUser = {
+        uid,
+        name: "Mock User",
+        email: "mock@example.com",
+        role: "student",
+        avatar: "/avatars/student.png",
         createdAt: Date.now(),
       }
-      mockUsers.push(user)
+      mockUsers.push(newUser)
+      return res.json(newUser)
     }
-    return res.json(user)
   }
 })
 
@@ -489,7 +474,7 @@ app.post("/api/auth/login", async (req, res) => {
 app.get("/api/courses", async (req, res) => {
   if (isFirebaseConfigured && dbInstance) {
     try {
-      const coursesSnap = await getDocs(collection(dbInstance, "courses"))
+      const coursesSnap = await dbInstance.collection("courses").get()
       const dbCourses = []
       coursesSnap.forEach((docSnap) => {
         dbCourses.push(docSnap.data())
@@ -512,7 +497,7 @@ app.post("/api/courses", async (req, res) => {
 
   if (isFirebaseConfigured && dbInstance) {
     try {
-      await setDoc(doc(dbInstance, "courses", course.id), course)
+      await dbInstance.collection("courses").doc(course.id).set(course)
       return res.json({ success: true, course })
     } catch (err) {
       return res.status(500).json({ error: err.message })
@@ -530,7 +515,7 @@ app.post("/api/courses", async (req, res) => {
 app.get("/api/quizzes", async (req, res) => {
   if (isFirebaseConfigured && dbInstance) {
     try {
-      const quizzesSnap = await getDocs(collection(dbInstance, "quizzes"))
+      const quizzesSnap = await dbInstance.collection("quizzes").get()
       const dbQuizzes = []
       quizzesSnap.forEach((docSnap) => {
         dbQuizzes.push(docSnap.data())
@@ -553,7 +538,7 @@ app.post("/api/quizzes", async (req, res) => {
 
   if (isFirebaseConfigured && dbInstance) {
     try {
-      await setDoc(doc(dbInstance, "quizzes", quiz.id), quiz)
+      await dbInstance.collection("quizzes").doc(quiz.id).set(quiz)
       return res.json({ success: true, quiz })
     } catch (err) {
       return res.status(500).json({ error: err.message })
@@ -576,11 +561,8 @@ app.get("/api/progress/:uid", async (req, res) => {
 
   if (isFirebaseConfigured && dbInstance) {
     try {
-      const progressQuery = query(
-        collection(dbInstance, "progress"),
-        where("uid", "==", uid)
-      )
-      const progressSnap = await getDocs(progressQuery)
+      const progressQuery = dbInstance.collection("progress").where("uid", "==", uid)
+      const progressSnap = await progressQuery.get()
       const progressMap = {}
       progressSnap.forEach((d) => {
         const p = d.data()
@@ -611,7 +593,7 @@ app.post("/api/progress", async (req, res) => {
 
   if (isFirebaseConfigured && dbInstance) {
     try {
-      await setDoc(doc(dbInstance, "progress", `${uid}_${courseId}`), {
+      await dbInstance.collection("progress").doc(`${uid}_${courseId}`).set({
         uid,
         courseId,
         completedLessonIds,
